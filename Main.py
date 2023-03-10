@@ -5,7 +5,8 @@ from Demos.MicDemo import MicDemo
 from Demos.RandomizedMicDemo import RandomizedMicDemo
 from Demos.VoiceRecognizer import VoiceDemo
 from Handlers.RobotHandler import RobotHandler
-from test import mainmethod
+# from test import mainmethod
+from Handlers.VisionHandler import VisionHandler
 
 from multiprocessing import Process
 
@@ -37,8 +38,11 @@ def g():
 
 
 if __name__ == '__main__':
-    visionProcess = Process(target=f)
-    audioProcess = Process(target=g)
+    # visionProcess = Process(target=f)
+    # audioProcess = Process(target=g)
 
-    visionProcess.start()
-    audioProcess.start()
+    # visionProcess.start()
+    # audioProcess.start()
+
+    visionHandler = VisionHandler()
+    visionHandler.start()
