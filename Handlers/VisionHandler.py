@@ -22,6 +22,7 @@ from google.protobuf.json_format import MessageToDict
 global client
 PORT = 5005
 IP = "192.168.2.2"
+HISTORY_LENGTH = 16
 
 
 class VisionHandler():
@@ -44,39 +45,30 @@ class VisionHandler():
         self.keypoint_classifier = KeyPointClassifier()
         self.point_history_classifier = PointHistoryClassifier()
 
-    def start(self):
-        # ラベル読み込み ###########################################################
-        with open('Models/keypoint_classifier/keypoint_classifier_label.csv',
-                  encoding='utf-8-sig') as f:
-            keypoint_classifier_labels = csv.reader(f)
-            keypoint_classifier_labels = [
-                row[0] for row in keypoint_classifier_labels
-            ]
-        with open(
-                'Models/point_history_classifier/point_history_classifier_label.csv',
-                encoding='utf-8-sig') as f:
-            point_history_classifier_labels = csv.reader(f)
-            point_history_classifier_labels = [
-                row[0] for row in point_history_classifier_labels
-            ]
+        self.keypoint_classifier_labels = self.getClassifierLabels(
+            'Models/keypoint_classifier/keypoint_classifier_label.csv')
+        self.point_history_classifier_labels = self.getClassifierLabels(
+            'Models/point_history_classifier/point_history_classifier_label.csv')
 
-        # FPS計測モジュール ########################################################
-        cvFpsCalc = CvFpsCalc(buffer_len=10)
+        self.cvFpsCalc = CvFpsCalc(buffer_len=10)
 
-        # 座標履歴 #################################################################
-        history_length = 16
-        point_history = deque(maxlen=history_length)
-        point_history_pointer = deque(maxlen=history_length)
-        point_history_middle = deque(maxlen=history_length)
-        point_history_ring = deque(maxlen=history_length)
+        self.point_history = deque(maxlen=HISTORY_LENGTH)
+        self.point_history_pointer = deque(maxlen=HISTORY_LENGTH)
+        self.point_history_middle = deque(maxlen=HISTORY_LENGTH)
+        self.point_history_ring = deque(maxlen=HISTORY_LENGTH)
 
         # フィンガージェスチャー履歴 ################################################
-        finger_gesture_history = deque(maxlen=history_length)
-        finger_gesture_history_pointer = deque(maxlen=history_length)
-        finger_gesture_history_middle = deque(maxlen=history_length)
-        finger_gesture_history_ring = deque(maxlen=history_length)
+        self.finger_gesture_history = deque(maxlen=HISTORY_LENGTH)
+        self.finger_gesture_history_pointer = deque(maxlen=HISTORY_LENGTH)
+        self.finger_gesture_history_middle = deque(maxlen=HISTORY_LENGTH)
+        self.finger_gesture_history_ring = deque(maxlen=HISTORY_LENGTH)
 
-        #  ########################################################################
+    def start(self):
+        self.run()
+        self.cap.release()
+        cv.destroyAllWindows()
+
+    def run(self):
         mode = 0
         count_wave = 0
         count_twirl = 0
@@ -93,7 +85,7 @@ class VisionHandler():
         stopCount = 0
 
         while True:
-            fps = cvFpsCalc.get()
+            fps = self.cvFpsCalc.get()
 
             # キー処理(ESC：終了) #################################################
             key = cv.waitKey(10)
@@ -130,12 +122,12 @@ class VisionHandler():
                     pre_processed_landmark_list = self.pre_process_landmark(
                         landmark_list)
                     pre_processed_point_history_list = self.pre_process_point_history(
-                        debug_image, point_history)
+                        debug_image, self.point_history)
 
                     pre_processed_landmark_list_pointer = self.pre_process_landmark(
                         landmark_list)
                     pre_processed_point_history_list_pointer = self.pre_process_point_history(
-                        debug_image, point_history_pointer)
+                        debug_image, self.point_history_pointer)
 
                     # pre_processed_landmark_list_middle = pre_process_landmark(landmark_list)
                     # pre_processed_point_history_list_middle = pre_process_point_history(debug_image, point_history_middle)
@@ -156,30 +148,30 @@ class VisionHandler():
                     # hand_sign_id_ring = keypoint_classifier(pre_processed_landmark_list_ring)
 
                     # just pointer finger
-                    point_history_pointer.append(landmark_list[8])
+                    self.point_history_pointer.append(landmark_list[8])
                     # just middle finger
                     # point_history_middle.append(landmark_list[12])
                     # just ring finger
                     # point_history_ring.append(landmark_list[16])
 
                     # track all points
-                    point_history.append(landmark_list[4])
-                    point_history.append(landmark_list[8])
-                    point_history.append(landmark_list[12])
-                    point_history.append(landmark_list[16])
-                    point_history.append(landmark_list[20])  # 人差指座標
+                    self.point_history.append(landmark_list[4])
+                    self.point_history.append(landmark_list[8])
+                    self.point_history.append(landmark_list[12])
+                    self.point_history.append(landmark_list[16])
+                    self.point_history.append(landmark_list[20])  # 人差指座標
 
                     # フィンガージェスチャー分類
                     finger_gesture_id = 0
                     point_history_len = len(pre_processed_point_history_list)
-                    if point_history_len == (history_length * 2):
+                    if point_history_len == (HISTORY_LENGTH * 2):
                         finger_gesture_id = self.point_history_classifier(
                             pre_processed_point_history_list)
 
                     finger_gesture_id_pointer = 0
                     point_history_len_pointer = len(
                         pre_processed_point_history_list_pointer)
-                    if point_history_len_pointer == (history_length * 2):
+                    if point_history_len_pointer == (HISTORY_LENGTH * 2):
                         finger_gesture_id_pointer = self.point_history_classifier(
                             pre_processed_point_history_list_pointer)
 
@@ -194,20 +186,20 @@ class VisionHandler():
                     #     finger_gesture_id_ring = point_history_classifier(pre_processed_point_history_list_ring)
 
                     # 直近検出の中で最多のジェスチャーIDを算出
-                    finger_gesture_history.append(finger_gesture_id)
+                    self.finger_gesture_history.append(finger_gesture_id)
                     most_common_fg_id = Counter(
-                        finger_gesture_history).most_common()
+                        self.finger_gesture_history).most_common()
 
-                    finger_gesture_history_pointer.append(
+                    self.finger_gesture_history_pointer.append(
                         finger_gesture_id_pointer)
                     most_common_fg_id_pointer = Counter(
-                        finger_gesture_history_pointer).most_common()
+                        self.finger_gesture_history_pointer).most_common()
 
-                    # finger_gesture_history_middle.append(finger_gesture_id_middle)
-                    # most_common_fg_id_middle = Counter(finger_gesture_history_middle).most_common()
+                    # self.finger_gesture_history_middle.append(finger_gesture_id_middle)
+                    # most_common_fg_id_middle = Counter(self.finger_gesture_history_middle).most_common()
 
-                    # finger_gesture_history_ring.append(finger_gesture_id_ring)
-                    # most_common_fg_id_ring = Counter(finger_gesture_history_ring).most_common()
+                    # self.finger_gesture_history_ring.append(finger_gesture_id_ring)
+                    # most_common_fg_id_ring = Counter(self.finger_gesture_history_ring).most_common()
 
                     # 描画
                     debug_image = self.draw_bounding_rect(
@@ -218,8 +210,8 @@ class VisionHandler():
                         debug_image,
                         brect,
                         handedness,
-                        keypoint_classifier_labels[hand_sign_id],
-                        point_history_classifier_labels[most_common_fg_id[0][0]],
+                        self.keypoint_classifier_labels[hand_sign_id],
+                        self.point_history_classifier_labels[most_common_fg_id[0][0]],
                     )
 
                 # front = detectFront(hand_landmarks, results)
@@ -245,7 +237,7 @@ class VisionHandler():
                     curr_time_wave_f = curr_time_wave + timedelta(seconds=5)
                     count_wave = 0
 
-                if (self.detectOpen(hand_landmarks) and self.detectUpright(hand_landmarks) and self.detectFront(hand_landmarks, results) and (point_history_classifier_labels[most_common_fg_id_pointer[0][0]] == "Clockwise" or point_history_classifier_labels[most_common_fg_id_pointer[0][0]] == "Counter Clockwise")):
+                if (self.detectOpen(hand_landmarks) and self.detectUpright(hand_landmarks) and self.detectFront(hand_landmarks, results) and (self.point_history_classifier_labels[most_common_fg_id_pointer[0][0]] == "Clockwise" or self.point_history_classifier_labels[most_common_fg_id_pointer[0][0]] == "Counter Clockwise")):
                     print(".")
                     count_wave += 1
 
@@ -285,7 +277,7 @@ class VisionHandler():
                         tracker_z = []
 
                     else:
-                        if keypoint_classifier_labels[hand_sign_id] == "Sideways":
+                        if self.keypoint_classifier_labels[hand_sign_id] == "Sideways":
                             if len(tracker_x) == 0:
                                 curr_time_swipe = datetime.now()
                             tracker_x.append(hand_landmarks.landmark[8].x)
@@ -320,16 +312,20 @@ class VisionHandler():
                                 vari, x, y, a, b, meanDistance, curr_time_swipe = None, None, None, None, None, None, None
 
             else:
-                point_history.append([0, 0])
+                self.point_history.append([0, 0])
 
-            debug_image = self.draw_point_history(debug_image, point_history)
+            debug_image = self.draw_point_history(
+                debug_image, self.point_history)
             debug_image = self.draw_info(debug_image, fps, mode, number)
 
             # 画面反映 #############################################################
             cv.imshow('Hand Gesture Recognition', debug_image)
 
-        self.cap.release()
-        cv.destroyAllWindows()
+    def getClassifierLabels(self, path):
+        with open(path, encoding='utf-8-sig') as f:
+            labels = csv.reader(f)
+            labels = [row[0] for row in labels]
+            return labels
 
     # REFACTORED
     def detectOpen(self, hand_landmarks):
