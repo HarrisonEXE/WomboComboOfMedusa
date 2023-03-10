@@ -4,7 +4,7 @@ import serial
 from xarm import XArmAPI
 from queue import Queue
 from threading import Thread
-from Helpers.Helpers import createRandList, delay
+from Helpers.Utils import createRandList, delay
 from Helpers.TrajectoryGeneration import fifth_poly, spline_poly
 
 

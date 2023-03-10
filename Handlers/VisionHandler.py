@@ -10,10 +10,11 @@ import cv2 as cv
 import numpy as np
 import mediapipe as mp
 
-from utils import CvFpsCalc
 from Models import KeyPointClassifier
 from Models import PointHistoryClassifier
 from Handlers.DrawingHandler import DrawingHandler
+from Helpers.CvFpsCalc import CvFpsCalc
+from Helpers.Utils import isNear, euclideanDistance, variance
 
 import math
 from datetime import datetime, timedelta
@@ -247,7 +248,7 @@ class VisionHandler():
                         stopCount += 1
                         # stop hand gesture
                         if (not(sent) and stopCount > 10):
-                            client.send_message("/stop", 0)
+                            # client.send_message("/stop", 0)
                             print("stop")
                             sent = True
 
@@ -264,7 +265,7 @@ class VisionHandler():
                         count_twirl += 1
 
                     if count_twirl > 15:
-                        client.send_message("/wave", 3)
+                        # client.send_message("/wave", 3)
                         sent = False
                         print("twirl now")
                         count_twirl = 0
@@ -373,14 +374,7 @@ class VisionHandler():
             4].z > hand_landmarks.landmark[12].z and hand_landmarks.landmark[4].z > hand_landmarks.landmark[16].z
         upright = detectUpright(hand_landmarks)
 
-        if (back and near and thumbBack and upright):
-            return True
-
-    def euclideanDistance(self, a_x, a_y, a_z, b_x, b_y, b_z):
-        return math.sqrt(math.pow((a_x-b_x), 2) + math.pow((a_y-b_y), 2) + math.pow((a_z-b_z), 2))
-
-    def isNear(self, fingerOne, fingerTwo, threshold):
-        return euclideanDistance(fingerOne.x, fingerOne.y, fingerOne.z, fingerTwo.x, fingerTwo.y, fingerTwo.z) < threshold
+        return back and near and thumbBack and upright
 
     def detectUpright(self, hand_landmarks):
         pointerDistance = math.sqrt((hand_landmarks.landmark[8].x - hand_landmarks.landmark[5].x)**2 + (
@@ -397,34 +391,21 @@ class VisionHandler():
         ringStraight = hand_landmarks.landmark[16].y < abs(
             hand_landmarks.landmark[13].y - ringDistance*4/5)
 
-        if (pointerStraight and middleStraight and ringStraight):
-            return True
-        else:
-            return False
+        return pointerStraight and middleStraight and ringStraight
 
     def detectFront(self, hand_landmarks, results):
         for idx, hand_handedness in enumerate(results.multi_handedness):
             handedness_dict = MessageToDict(hand_handedness)
             handedness = handedness_dict["classification"][0]["label"]
 
-        if (handedness == "Right"):
+        if handedness == "Right":
             if (hand_landmarks.landmark[17].x > hand_landmarks.landmark[13].x > hand_landmarks.landmark[9].x > hand_landmarks.landmark[5].x) and (hand_landmarks.landmark[18].x > hand_landmarks.landmark[14].x > hand_landmarks.landmark[10].x > hand_landmarks.landmark[6].x) and (hand_landmarks.landmark[19].x > hand_landmarks.landmark[15].x > hand_landmarks.landmark[11].x > hand_landmarks.landmark[7].x) and (hand_landmarks.landmark[20].x > hand_landmarks.landmark[16].x > hand_landmarks.landmark[12].x > hand_landmarks.landmark[8].x):
                 return True
         else:
             if (hand_landmarks.landmark[17].x < hand_landmarks.landmark[13].x < hand_landmarks.landmark[9].x < hand_landmarks.landmark[5].x) and (hand_landmarks.landmark[18].x < hand_landmarks.landmark[14].x < hand_landmarks.landmark[10].x < hand_landmarks.landmark[6].x) and (hand_landmarks.landmark[19].x < hand_landmarks.landmark[15].x < hand_landmarks.landmark[11].x < hand_landmarks.landmark[7].x) and (hand_landmarks.landmark[20].x < hand_landmarks.landmark[16].x < hand_landmarks.landmark[12].x < hand_landmarks.landmark[8].x):
                 return True
-        return False
 
-    def variance(self, data_y):
-        # Number of observations
-        n = len(data_y)
-        # Mean of the data
-        mean = sum(data_y) / n
-        # Square deviations
-        deviations = [(y - mean) ** 2 for y in data_y]
-        # Variance
-        variance = sum(deviations) / n
-        return variance
+        return False
 
     def select_mode(self, key, mode):
         number = -1
