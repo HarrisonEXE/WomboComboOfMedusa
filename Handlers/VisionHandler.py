@@ -26,41 +26,25 @@ IP = "192.168.2.2"
 
 class VisionHandler():
 
-    def __init__(self):
-        pass
+    def __init__(self, device=0, cap_width=960, cap_height=540, use_static_image_mode=True, min_detection_confidence=0.7, min_tracking_confidence=0.5):
 
-    def start(self):
-        # 引数解析 #################################################################
-        args = self.get_args()
+        self.cap = cv.VideoCapture(device)
+        self.cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
+        self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
 
-        cap_device = args.device
-        cap_width = args.width
-        cap_height = args.height
+        self.use_brect = True
 
-        use_static_image_mode = args.use_static_image_mode
-        min_detection_confidence = args.min_detection_confidence
-        min_tracking_confidence = args.min_tracking_confidence
-
-        use_brect = True
-
-        # カメラ準備 ###############################################################
-        cap = cv.VideoCapture(cap_device)
-        cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
-        cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
-
-        # モデルロード #############################################################
-        mp_hands = mp.solutions.hands
-        hands = mp_hands.Hands(
+        self.hands = mp.solutions.hands.Hands(
             static_image_mode=use_static_image_mode,
             max_num_hands=1,
             min_detection_confidence=min_detection_confidence,
             min_tracking_confidence=min_tracking_confidence,
         )
 
-        keypoint_classifier = KeyPointClassifier()
+        self.keypoint_classifier = KeyPointClassifier()
+        self.point_history_classifier = PointHistoryClassifier()
 
-        point_history_classifier = PointHistoryClassifier()
-
+    def start(self):
         # ラベル読み込み ###########################################################
         with open('Models/keypoint_classifier/keypoint_classifier_label.csv',
                   encoding='utf-8-sig') as f:
@@ -118,7 +102,7 @@ class VisionHandler():
             number, mode = self.select_mode(key, mode)
 
             # カメラキャプチャ #####################################################
-            ret, image = cap.read()
+            ret, image = self.cap.read()
             if not ret:
                 break
             image = cv.flip(image, 1)  # ミラー表示
@@ -128,7 +112,7 @@ class VisionHandler():
             image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
 
             image.flags.writeable = False
-            results = hands.process(image)
+            results = self.hands.process(image)
             image.flags.writeable = True
 
             #  ####################################################################
@@ -164,9 +148,9 @@ class VisionHandler():
                                      pre_processed_point_history_list)
 
                     # ハンドサイン分類
-                    hand_sign_id = keypoint_classifier(
+                    hand_sign_id = self.keypoint_classifier(
                         pre_processed_landmark_list)
-                    hand_sign_id_pointer = keypoint_classifier(
+                    hand_sign_id_pointer = self.keypoint_classifier(
                         pre_processed_landmark_list_pointer)
                     # hand_sign_id_middle = keypoint_classifier(pre_processed_landmark_list_middle)
                     # hand_sign_id_ring = keypoint_classifier(pre_processed_landmark_list_ring)
@@ -189,14 +173,14 @@ class VisionHandler():
                     finger_gesture_id = 0
                     point_history_len = len(pre_processed_point_history_list)
                     if point_history_len == (history_length * 2):
-                        finger_gesture_id = point_history_classifier(
+                        finger_gesture_id = self.point_history_classifier(
                             pre_processed_point_history_list)
 
                     finger_gesture_id_pointer = 0
                     point_history_len_pointer = len(
                         pre_processed_point_history_list_pointer)
                     if point_history_len_pointer == (history_length * 2):
-                        finger_gesture_id_pointer = point_history_classifier(
+                        finger_gesture_id_pointer = self.point_history_classifier(
                             pre_processed_point_history_list_pointer)
 
                     # finger_gesture_id_middle = 0
@@ -227,7 +211,7 @@ class VisionHandler():
 
                     # 描画
                     debug_image = self.draw_bounding_rect(
-                        use_brect, debug_image, brect)
+                        self.use_brect, debug_image, brect)
                     debug_image = self.draw_landmarks(
                         debug_image, landmark_list)
                     debug_image = self.draw_info_text(
@@ -344,64 +328,32 @@ class VisionHandler():
             # 画面反映 #############################################################
             cv.imshow('Hand Gesture Recognition', debug_image)
 
-        cap.release()
+        self.cap.release()
         cv.destroyAllWindows()
 
-    # TODO: ensure functionality is retained
+    # REFACTORED
     def detectOpen(self, hand_landmarks):
-        start_time = time.perf_counter()
-
-        firstFingerIsOpen = False
-        secondFingerIsOpen = False
-        thirdFingerIsOpen = False
-        fourthFingerIsOpen = False
-
+        # First Finger is Open
         pseudoFixKeyPoint = hand_landmarks.landmark[6].y
-        firstFingerIsOpen = hand_landmarks.landmark[
-            7].y < pseudoFixKeyPoint and hand_landmarks.landmark[8].y < pseudoFixKeyPoint
-
-        pseudoFixKeyPoint = hand_landmarks.landmark[10].y
-        secondFingerIsOpen = hand_landmarks.landmark[
-            11].y < pseudoFixKeyPoint and hand_landmarks.landmark[12].y < pseudoFixKeyPoint
-
-        pseudoFixKeyPoint = hand_landmarks.landmark[14].y
-        thirdFingerIsOpen = hand_landmarks.landmark[
-            15].y < pseudoFixKeyPoint and hand_landmarks.landmark[16].y < pseudoFixKeyPoint
-
-        pseudoFixKeyPoint = hand_landmarks.landmark[18].y
-        fourthFingerIsOpen = hand_landmarks.landmark[
-            19].y < pseudoFixKeyPoint and hand_landmarks.landmark[20].y < pseudoFixKeyPoint
-
-        end_time = time.perf_counter()
-        execution_time = end_time - start_time
-        print(f"The execution time is: {execution_time}")
-
-        if not(firstFingerIsOpen or secondFingerIsOpen or thirdFingerIsOpen or fourthFingerIsOpen):
-            return False
-        else:
+        if max(hand_landmarks.landmark[7].y, hand_landmarks.landmark[8].y) < pseudoFixKeyPoint:
             return True
 
-    def get_args(self):
-        parser = argparse.ArgumentParser()
+        # Second Finger is Open
+        pseudoFixKeyPoint = hand_landmarks.landmark[10].y
+        if max(hand_landmarks.landmark[11].y, hand_landmarks.landmark[12].y) < pseudoFixKeyPoint:
+            return True
 
-        parser.add_argument("--device", type=int, default=0)
-        parser.add_argument("--width", help='cap width', type=int, default=960)
-        parser.add_argument("--height", help='cap height',
-                            type=int, default=540)
+        # Third Finger is Open
+        pseudoFixKeyPoint = hand_landmarks.landmark[14].y
+        if max(hand_landmarks.landmark[15].y, hand_landmarks.landmark[16].y) < pseudoFixKeyPoint:
+            return True
 
-        parser.add_argument('--use_static_image_mode', action='store_true')
-        parser.add_argument("--min_detection_confidence",
-                            help='min_detection_confidence',
-                            type=float,
-                            default=0.7)
-        parser.add_argument("--min_tracking_confidence",
-                            help='min_tracking_confidence',
-                            type=int,
-                            default=0.5)
+        # Fourth Finger is Open
+        pseudoFixKeyPoint = hand_landmarks.landmark[18].y
+        if max(hand_landmarks.landmark[19].y, hand_landmarks.landmark[20].y) < pseudoFixKeyPoint:
+            return True
 
-        args = parser.parse_args()
-
-        return args
+        return False
 
     def detectBack(self, hand_landmarks, results):
         for idx, hand_handedness in enumerate(results.multi_handedness):
