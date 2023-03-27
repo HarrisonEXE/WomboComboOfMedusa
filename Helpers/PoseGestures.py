@@ -1,10 +1,6 @@
-import mediapipe as mp
 import numpy as np
 import cv2
 import math
-from datetime import datetime, timedelta
-import time
-from google.protobuf.json_format import MessageToDict
 
 hand_landmarks = {
     'thumb': [1, 2, 3, 4],
