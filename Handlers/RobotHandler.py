@@ -4,8 +4,10 @@ import serial
 from xarm import XArmAPI
 from queue import Queue
 from threading import Thread
+from Helpers import positions
 from Helpers.Utils import createRandList, delay
 from Helpers.TrajectoryGeneration import fifth_poly, spline_poly
+from Helpers.DataFilters import save_joint_data
 
 
 class RobotHandler:
@@ -15,9 +17,12 @@ class RobotHandler:
         self.arms = []
         self.strumD = 30
         self.speed = 0.25
+        self.basesamp = 40
+        self.usamp = 30
         # self.arduino = serial.Serial('/dev/ttyACM0', 9600) # for Linux
         # self.arduino = serial.Serial('com4', 9600)    # for PC
         self.IP = self.setIPs()
+        self.IPus = self.setIPus()
         self.randLists = self.setRandList()
 
         self.qList = self.setQList()
@@ -30,6 +35,9 @@ class RobotHandler:
         self.lightQ = Queue()
         self.lightThread = Thread(
             target=self.lightController, args=(self.lightQ,))
+
+        # TODO: replace tracking_offest for vision pos offest with a better solution
+        self.tracking_offset = 0
 
     def setQList(self):
         q0 = Queue()
@@ -60,6 +68,14 @@ class RobotHandler:
         IP3 = [-1.4, 83.95, 0, 120, -self.strumD / 2, 50.65, -45]
         IP4 = [-1.8, 81.8, 0, 120, -self.strumD / 2, 50.65, -45]
         return [IP0, IP1, IP2, IP3, IP4]
+
+    def setIPus(self):
+        IP0us = [-0.25 - self.basesamp / 2, 87.5 - self.usamp, -2, 126.5, 0, 51.7, -45]
+        IP1us = [2.67 - self.basesamp / 2, 86.32 - self.usamp, 0, 127.1, 0, 50.1, -45]
+        IP2us = [1.3 - self.basesamp / 2, 81.8 - self.usamp, 0, 120, 0, 54.2, -45]
+        IP3us = [-1.4 - self.basesamp / 2, 83.95 - self.usamp, 0, 120, 0, 50.75, -45]
+        IP4us = [-1.8 - self.basesamp / 2, 81.88 - self.usamp, 0, 120, 0, 50.75, -45]
+        return [IP0us, IP1us, IP2us, IP3us, IP4us]
 
     def setupRobots(self):
         self.buildArmsList()
@@ -95,7 +111,8 @@ class RobotHandler:
         print("Robot threads started")
 
     def moveToStart(self, index):
-        self.arms[index].set_servo_angle(angle=[0.0, 0.0, 0.0, 1.57, 0.0, 0, 0.0], wait=False, speed=0.4, acceleration=0.25,
+        self.arms[index].set_servo_angle(angle=[0.0, 0.0, 0.0, 1.57, 0.0, 0, 0.0], wait=False, speed=0.4,
+                                         acceleration=0.25,
                                          is_radian=True)
 
     def moveToStrumPos(self, index):
@@ -188,15 +205,27 @@ class RobotHandler:
         strumTrajectories = [upStrumTraj, downStrumTraj]
 
         while True:
-            queue.get()
-            print("Strum Command Received for Robot " + str(robotNum))
+            #TODO: Add "mode" parameter to all queue items across the board
+            #TODO: Define "mode" policies and mappings
+            mode, data = queue.get()
 
-            strumDirection = i % 2
+            if mode == 'live':
+                print("Tracking Command Received for Robot " + str(robotNum))
+                self.trackbot(robotNum, data)
 
-            self.lightQ.put(robotNum)
-            self.strumbot(robotNum, strumTrajectories[strumDirection])
+            elif mode == 'pose':
+                print("Pose Command Received for Robot " + str(robotNum))
+                self.posebot(robotNum, data)
 
-            i += 1
+            elif mode == 'strum':
+                print("Strum Command Received for Robot " + str(robotNum))
+
+                strumDirection = i % 2
+
+                self.lightQ.put(robotNum)
+                self.strumbot(robotNum, strumTrajectories[strumDirection])
+
+                i += 1
 
     def drumController(self, queue, num):
         # drumQ.put(1)
@@ -224,15 +253,62 @@ class RobotHandler:
                 self.drumbot(trajz3, trajp3, num)
 
     # --------------- Controller Helpers --------------- #
+    def trackbot(self, num, data):
+        head = data[0]
+        shoulder = data[1]
 
-    def strumbot(self, numarm, traj):
-        pos = self.IP[numarm]
+        if self.tracking_offset <= 300:
+            offset0 = head['x']
+            offset1 = head['y']
+            offset3 = shoulder['y']
+            offset4 = shoulder['x']
+
+        # TODO: Following values are hardcoded for xArm 0 for testing purposes, need to be generalized for all robots
+        j3 = np.interp(shoulder['x'] - offset4, [-0.5, 0.5], [-30, 30])
+        j4 = np.interp(shoulder['y'] - offset3, [-0.5, 0.5], [70, 120])
+        j5 = np.interp(head['x'] - offset0, [-0.5, 0.5], [-60, 60])
+        j6 = np.interp(head['y'] - offset1, [-0.5, 0.5], [-70, 70])
+
+        p = self.getAngles(num)
+        p[2] = j3
+        p[3] = j4
+        p[4] = j5
+        p[5] = j6
+
+        # save_joint_data('joint_data.csv', time.time(), p)
+        self.setAngles(num, p)
+        self.tracking_offset += 1
+
+    def posebot(self, num, play):
+
+        if play == 1:  # waving HI
+            poseI = self.getAngles(num)
+            #TODO: Remove hard-coded values for robot positions
+            poseF = [0, 0, 0, 90, 0, 0, 0]
+            newPos = self.poseToPose(poseI, poseF, 5)
+            self.gotoPose(num, newPos)
+
+        if play == 2:  # waving BYE
+            poseI = self.getAngles(num)
+            poseF = self.IP[num]
+            newPos = self.poseToPose(poseI, poseF, 5)
+            self.gotoPose(num, newPos)
+
+        if play == 3:  # twirl
+            poseI = self.getAngles(num)
+            poseF = self.IPus[num]
+            newPos = self.poseToPose(poseI, poseF, 4)
+            self.gotoPose(num, newPos)
+            self.robomove(num, positions.spintraj[num])
+
+    def strumbot(self, num, traj):
+        pos = self.IP[num]
         j_angles = pos
         track_time = time.time()
         initial_time = time.time()
         for i in range(len(traj)):
             j_angles[4] = traj[i]
-            self.arms[numarm].set_servo_angle_j(
+            self.arms[num].set_servo_angle_j(
                 angles=j_angles, is_radian=False)
 
             while track_time < initial_time + 0.004:
@@ -269,7 +345,7 @@ class RobotHandler:
 
     # TODO: rename to something light specific
 
-    def delay():
+    def delay(self):
         time.sleep(0.013)
 
     def setRandList(self):
@@ -282,15 +358,53 @@ class RobotHandler:
                           randList3, randList4, randList5]
 
     def scare(self):
-        self.arms[0].set_servo_angle(angle=[-.1, -15, 71.6, 83.8, -7.3, 0.8, 4.6], wait=False, speed=40, acceleration=0.6,
+        self.arms[0].set_servo_angle(angle=[-.1, -15, 71.6, 83.8, -7.3, 0.8, 4.6], wait=False, speed=40,
+                                     acceleration=0.6,
                                      is_radian=False)
-        self.arms[1].set_servo_angle(angle=[0.0, -43.9, 26.5, 90.1, 18.1, 1.2, 28], wait=False, speed=25, acceleration=0.4,
+        self.arms[1].set_servo_angle(angle=[0.0, -43.9, 26.5, 90.1, 18.1, 1.2, 28], wait=False, speed=25,
+                                     acceleration=0.4,
                                      is_radian=False)
-        self.arms[2].set_servo_angle(angle=[25.7, 34.9, 25.8, 93.9, -25.2, 5.1, 2], wait=False, speed=25, acceleration=0.4,
+        self.arms[2].set_servo_angle(angle=[25.7, 34.9, 25.8, 93.9, -25.2, 5.1, 2], wait=False, speed=25,
+                                     acceleration=0.4,
                                      is_radian=False)
-        self.arms[3].set_servo_angle(angle=[41.4, 0.0, 0.0, 128.3, 0.0, 54.4, 3.1], wait=False, speed=25, acceleration=0.4,
+        self.arms[3].set_servo_angle(angle=[41.4, 0.0, 0.0, 128.3, 0.0, 54.4, 3.1], wait=False, speed=25,
+                                     acceleration=0.4,
                                      is_radian=False)
         # arms[4].set_servo_angle(angle=IP[4], wait=False, speed=20, acceleration=0.25,
         #                         is_radian=False)
 
-    def getAngles(self, index): return self.arms[index].angles
+    def getAngles(self, index):
+        return self.arms[index].angles
+
+    def setAngles(self, index, angles, is_radian=False):
+        self.arms[index].set_servo_angle_j(angles=angles, is_radian=is_radian)
+
+    # --------------- Controller Helpers - Needs Refactoring --------------- #
+    #TODO: Refactor this to be more readable, and less redundant
+    #TODO: Check if duplicate code can be removed
+    def poseToPose(self, poseI, poseF, t):
+        traj = []
+        for p in range(len(poseI)):
+            traj.append(fifth_poly(poseI[p], poseF[p], t))
+        return traj
+
+    def gotoPose(self, num, traj):
+        track_time = time.time()
+        initial_time = time.time()
+        for ang in range(len(traj[0])):
+            angles = [traj[0][ang], traj[1][ang], traj[2][ang], traj[3][ang], traj[4][ang], traj[5][ang], traj[6][ang]]
+            self.setAngles(num, angles, is_radian=False)
+            while track_time < initial_time + 0.004:
+                track_time = time.time()
+                time.sleep(0.001)
+            initial_time += 0.004
+
+    def robomove(self, num, trajectory):
+        track_time = time.time()
+        initial_time = time.time()
+        for j_angles in trajectory:
+            self.setAngles(num, j_angles, is_radian=False)
+            while track_time < initial_time + 0.004:
+                track_time = time.time()
+                time.sleep(0.0001)
+            initial_time += 0.004
