@@ -11,6 +11,7 @@ hand_landmarks = {
     'palm': [0, 5, 9, 13, 17]
 }
 
+#TODO: Merge with HandGestures.py
 
 def angle(self, point1, point2, point3):
     """ Calculate angle between two lines """
