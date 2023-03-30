@@ -71,7 +71,8 @@ class PosenetHandler:
             self.count_twirl += 1
 
         if self.count_twirl > 15:
-            client.send_message("/wave", 3)
+            # client.send_message("/gesture", 3)
+            self.curr_gesture = "twirl"
             print("twirl now")
             time.sleep(5)
             self.count_twirl = 0
@@ -102,7 +103,7 @@ class PosenetHandler:
                 self.tracker_x.append(landmarks.landmark[8].x)
                 self.tracker_y.append(landmarks.landmark[8].y)
                 self.tracker_z.append(landmarks.landmark[8].z)
-                self.distance.append(self.euclideanDistance(landmarks.landmark[12], landmarks.landmark[0]))
+                self.distance.append(euclideanDistance(landmarks.landmark[12], landmarks.landmark[0]))
 
                 vari = variance(self.tracker_y)
 
@@ -116,10 +117,12 @@ class PosenetHandler:
                 if abs(max(self.tracker_x) - min(self.tracker_x)) >= 1.5 * mean_distance and vari < .002 and abs(a) < .15:
                     if sum(self.tracker_x[0:int(len(self.tracker_x) / 2)]) < sum(self.tracker_x[int(len(self.tracker_x) / 2):]):
                         print("swipe right")
-                        client.send_message("/swipe", 0)
+                        self.curr_gesture = "swipe_right"
+                        # client.send_message("/swipe", 0)
                     else:
                         print("swipe left")
-                        client.send_message("/swipe", 1)
+                        self.curr_gesture = "swipe_left"
+                        # client.send_message("/swipe", 1)
                     self.tracker_x = []
                     self.tracker_y = []
                     self.tracker_z = []
@@ -143,6 +146,7 @@ class PosenetHandler:
                 landmarks = results.right_hand_landmarks
                 image_rows, image_cols, _ = image.shape
 
+                # detect gestures
                 self.detect_twirl(landmarks, results)
                 self.detect_stop_go(landmarks, results)
                 self.detect_swipe(landmarks, results)
@@ -165,7 +169,7 @@ class PosenetHandler:
                 shoulder_z = (landmarks[self.holistic.PoseLandmark.RIGHT_SHOULDER.value].z + landmarks[
                     self.holistic.PoseLandmark.LEFT_SHOULDER.value].z) / 2
                 if self.prev_gesture == 'wave_hello':
-                    client.send_message("/head", [head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z])
+                    client.send_message("/live", [head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z])
                     print("Head: ", head_x, head_y)
 
             cv.putText(image, str(int(fps)) + " FPS", (10, 70), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
