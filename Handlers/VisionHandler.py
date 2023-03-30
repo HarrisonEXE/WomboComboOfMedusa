@@ -168,10 +168,11 @@ class PosenetHandler:
                     self.holistic.PoseLandmark.LEFT_SHOULDER.value].y) / 2
                 shoulder_z = (landmarks[self.holistic.PoseLandmark.RIGHT_SHOULDER.value].z + landmarks[
                     self.holistic.PoseLandmark.LEFT_SHOULDER.value].z) / 2
+                #TODO: This will never be true since we don't have wave_hello anymore!!!
                 if self.prev_gesture == 'wave_hello':
                     client.send_message("/live", [head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z])
-                    print("Head: ", head_x, head_y)
-
+                    # print("Head: ", head_x, head_y)
+                    # print("Shoulder: ", shoulder_x, shoulder_y)
             cv.putText(image, str(int(fps)) + " FPS", (10, 70), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
             cv.imshow('Gesture Recognition', image)
 
