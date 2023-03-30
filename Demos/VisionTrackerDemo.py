@@ -48,8 +48,14 @@ class VisionTrackerDemo(IRobotDemo):
                 self.qList[0].put([mode, 2])
             elif args[0] == "twirl":
                 self.qList[0].put([mode, 3])
+            elif args[0] == "swipe_right":
+                #TODO: Add swipe right gesture 0
+                self.qList[0].put([mode, 0])
+            elif args[0] == "swipe_left":
+                #TODO: Add swipe left gesture 1
+                self.qList[0].put([mode, 1])
 
-        elif address == "/head":
+        elif address == "/live":
             head = {'x': args[0], 'y': args[1], 'z': args[2]}
             shoulder = {'x': args[3], 'y': args[4], 'z': args[5]}
 
