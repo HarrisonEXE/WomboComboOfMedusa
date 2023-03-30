@@ -1,12 +1,14 @@
 from pythonosc import udp_client
 from datetime import datetime, timedelta
+import time
 
 import cv2 as cv
 import mediapipe as mp
+import numpy as np
 
 from Handlers.DrawingHandler import DrawingHandler
 from Helpers.CvFpsCalc import CvFpsCalc
-from Helpers.PoseGestures import detect_hand_gesture
+from Helpers.HandGestures import *
 
 # UDP Client
 global client
@@ -14,6 +16,9 @@ PORT = 12346
 IP = "192.168.2.2"
 client = udp_client.SimpleUDPClient(IP, PORT)
 
+#TODO: Add wave detection
+#TODO: Check stop/go detection client message
+#TODO: Standardize gesture messages to be sent to client
 
 class PosenetHandler:
     def __init__(self, device=0, cap_width=960, cap_height=540, use_static_image_mode=True,
@@ -37,15 +42,93 @@ class PosenetHandler:
         self.cap.release()
         cv.destroyAllWindows()
 
-    def run(self):
-        # Initialize gestures
-        count_wave = 0
-        curr_time_wave = datetime.now()
-        curr_time_wave_f = curr_time_wave + timedelta(seconds=5)
-        waving = False
+    def initialize_gesture_detection_state(self):
+        # twirl variables
+        self.count_twirl = 0
+        self.curr_time_twirl = None
 
-        prev_gesture = ""
-        gesture = ""
+        # swipe variables
+        self.curr_time_swipe = None
+        self.tracker_x = []
+        self.tracker_y = []
+        self.tracker_z = []
+        self.distance = []
+
+        # stop/go variables
+        self.count_go = 0
+        self.go = False
+
+        # gesture variables
+        self.prev_gesture = ""
+        self.curr_gesture = ""
+
+    def detect_twirl(self, landmarks, results):
+        if detectBasic(landmarks, results):
+            self.curr_time_twirl = datetime.now()
+            self.count_twirl = 0
+
+        if self.curr_time_twirl is not None and detectTwirlEnd(landmarks, results) and self.curr_time_twirl + timedelta(seconds=2) > datetime.now():
+            self.count_twirl += 1
+
+        if self.count_twirl > 15:
+            client.send_message("/wave", 3)
+            print("twirl now")
+            time.sleep(5)
+            self.count_twirl = 0
+
+    def detect_stop_go(self, landmarks, results):
+        if detectClosed(landmarks, results):
+            self.count_go += 1
+        else:
+            self.count_go = 0
+
+        if self.count_go > 10:
+            self.go = not self.go
+            print("stop/go detected")
+            time.sleep(5)
+            self.count_go = 0
+
+    def detect_swipe(self, landmarks, results):
+        if self.curr_time_swipe is not None and datetime.now() > self.curr_time_swipe + timedelta(seconds=3):
+            self.curr_time_swipe = None
+            self.tracker_x = []
+            self.tracker_y = []
+            self.tracker_z = []
+
+        else:
+            if detectSideways(landmarks, results):
+                if len(self.tracker_x) == 0:
+                    self.curr_time_swipe = datetime.now()
+                self.tracker_x.append(landmarks.landmark[8].x)
+                self.tracker_y.append(landmarks.landmark[8].y)
+                self.tracker_z.append(landmarks.landmark[8].z)
+                self.distance.append(self.euclideanDistance(landmarks.landmark[12], landmarks.landmark[0]))
+
+                vari = variance(self.tracker_y)
+
+                x = np.array(self.tracker_x)
+                y = np.array(self.tracker_y)
+
+                a, b = np.polyfit(x, y, 1)
+
+                mean_distance = sum(self.distance) / len(self.distance)
+
+                if abs(max(self.tracker_x) - min(self.tracker_x)) >= 1.5 * mean_distance and vari < .002 and abs(a) < .15:
+                    if sum(self.tracker_x[0:int(len(self.tracker_x) / 2)]) < sum(self.tracker_x[int(len(self.tracker_x) / 2):]):
+                        print("swipe right")
+                        client.send_message("/swipe", 0)
+                    else:
+                        print("swipe left")
+                        client.send_message("/swipe", 1)
+                    self.tracker_x = []
+                    self.tracker_y = []
+                    self.tracker_z = []
+                    self.distance = []
+                    vari, x, y, a, b, mean_distance, self.curr_time_swipe = None, None, None, None, None, None, None
+
+
+    def run(self):
+        self.initialize_gesture_detection_state()
 
         while True:
             fps = self.cvFpsCalc.get()
@@ -59,32 +142,16 @@ class PosenetHandler:
             if results.right_hand_landmarks:
                 landmarks = results.right_hand_landmarks
                 image_rows, image_cols, _ = image.shape
-                movements = detect_hand_gesture(landmarks, "R")
 
-                if movements.get("front") and movements.get("upright") and not movements.get("close"):
-                    count_wave += 1
+                self.detect_twirl(landmarks, results)
+                self.detect_stop_go(landmarks, results)
+                self.detect_swipe(landmarks, results)
 
-                if datetime.now() < curr_time_wave_f and count_wave >= 20:
-                    if not waving:
-                        gesture = "wave_hello"
-                        print("wave detected: HI")
-                    else:
-                        gesture = "wave_bye"
-                        print("wave detected: BYE")
-                    waving = not waving
-                    count_wave = 0
-                    curr_time_wave = datetime.now()
-                    curr_time_wave_f = curr_time_wave + timedelta(seconds=5)
-                elif datetime.now() >= curr_time_wave_f:
-                    curr_time_wave = datetime.now()
-                    curr_time_wave_f = curr_time_wave + timedelta(seconds=5)
-                    count_wave = 0
-
-                if gesture is not None:
-                    if gesture != prev_gesture:
-                        client.send_message("/gesture", gesture)
-                    cv.putText(image, str(gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
-                    prev_gesture = gesture
+                if self.curr_gesture is not None:
+                    if self.curr_gesture != self.prev_gesture:
+                        client.send_message("/gesture", self.curr_gesture)
+                    cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+                    self.prev_gesture = self.curr_gesture
 
             if results.pose_landmarks is not None:
                 landmarks = results.pose_landmarks.landmark
@@ -97,12 +164,12 @@ class PosenetHandler:
                     self.holistic.PoseLandmark.LEFT_SHOULDER.value].y) / 2
                 shoulder_z = (landmarks[self.holistic.PoseLandmark.RIGHT_SHOULDER.value].z + landmarks[
                     self.holistic.PoseLandmark.LEFT_SHOULDER.value].z) / 2
-                if prev_gesture == 'wave_hello':
+                if self.prev_gesture == 'wave_hello':
                     client.send_message("/head", [head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z])
                     print("Head: ", head_x, head_y)
 
             cv.putText(image, str(int(fps)) + " FPS", (10, 70), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
-            cv.imshow('Posture Gesture Recognition', image)
+            cv.imshow('Gesture Recognition', image)
 
     def mediapipe_detection(self, image, model):
         # To improve performance, optionally mark the image as not writeable to pass by reference.
