@@ -16,11 +16,12 @@ PORT = 12346
 IP = "192.168.2.2"
 client = udp_client.SimpleUDPClient(IP, PORT)
 
-#TODO: Add wave detection
-#TODO: Check stop/go detection client message
-#TODO: Standardize gesture messages to be sent to client
 
-class PosenetHandler:
+# TODO: Add wave detection
+# TODO: Check stop/go detection client message
+# TODO: Standardize gesture messages to be sent to client
+
+class VisionHandler:
     def __init__(self, device=0, cap_width=960, cap_height=540, use_static_image_mode=True,
                  min_detection_confidence=0.7, min_tracking_confidence=0.5):
         self.cap = cv.VideoCapture(device)
@@ -67,7 +68,8 @@ class PosenetHandler:
             self.curr_time_twirl = datetime.now()
             self.count_twirl = 0
 
-        if self.curr_time_twirl is not None and detectTwirlEnd(landmarks, results) and self.curr_time_twirl + timedelta(seconds=2) > datetime.now():
+        if self.curr_time_twirl is not None and detectTwirlEnd(landmarks, results) and self.curr_time_twirl + timedelta(
+                seconds=2) > datetime.now():
             self.count_twirl += 1
 
         if self.count_twirl > 15:
@@ -114,8 +116,10 @@ class PosenetHandler:
 
                 mean_distance = sum(self.distance) / len(self.distance)
 
-                if abs(max(self.tracker_x) - min(self.tracker_x)) >= 1.5 * mean_distance and vari < .002 and abs(a) < .15:
-                    if sum(self.tracker_x[0:int(len(self.tracker_x) / 2)]) < sum(self.tracker_x[int(len(self.tracker_x) / 2):]):
+                if abs(max(self.tracker_x) - min(self.tracker_x)) >= 1.5 * mean_distance and vari < .002 and abs(
+                        a) < .15:
+                    if sum(self.tracker_x[0:int(len(self.tracker_x) / 2)]) < sum(
+                            self.tracker_x[int(len(self.tracker_x) / 2):]):
                         print("swipe right")
                         self.curr_gesture = "swipe_right"
                         # client.send_message("/swipe", 0)
@@ -129,13 +133,14 @@ class PosenetHandler:
                     self.distance = []
                     vari, x, y, a, b, mean_distance, self.curr_time_swipe = None, None, None, None, None, None, None
 
-
     def run(self):
         self.initialize_gesture_detection_state()
 
         while True:
+            if cv.waitKey(5) & 0xFF == 27:
+                break
+
             fps = self.cvFpsCalc.get()
-            key = cv.waitKey(10)
 
             ret, frame = self.cap.read()
             image, results = self.mediapipe_detection(frame, self.pose)
@@ -168,7 +173,7 @@ class PosenetHandler:
                     self.holistic.PoseLandmark.LEFT_SHOULDER.value].y) / 2
                 shoulder_z = (landmarks[self.holistic.PoseLandmark.RIGHT_SHOULDER.value].z + landmarks[
                     self.holistic.PoseLandmark.LEFT_SHOULDER.value].z) / 2
-                #TODO: This will never be true since we don't have wave_hello anymore!!!
+                # TODO: This will never be true since we don't have wave_hello anymore!!!
                 if self.prev_gesture == 'wave_hello':
                     client.send_message("/live", [head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z])
                     # print("Head: ", head_x, head_y)
