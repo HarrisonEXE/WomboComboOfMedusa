@@ -5,8 +5,8 @@ import time
 import numpy as np
 
 #TODO: Removed redundant code
-#TODO: Merge with PosenetHandler.py
-#TODO: Removed duplicate functions with PosenetHandler.py
+#TODO: Merge with VisionHandler.py
+#TODO: Removed duplicate functions with VisionHandler.py
 
 def detectOpen(hand_landmarks):
     firstFingerIsOpen = False
