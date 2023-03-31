@@ -1,5 +1,5 @@
-from pythonosc import udp_client
 from datetime import datetime, timedelta
+from queue import Queue
 
 import cv2 as cv
 import mediapipe as mp
@@ -8,16 +8,9 @@ from Handlers.DrawingHandler import DrawingHandler
 from Helpers.CvFpsCalc import CvFpsCalc
 from Helpers.PoseGestures import detect_hand_gesture
 
-# UDP Client
-global client
-PORT = 12346
-IP = "192.168.2.2"
-client = udp_client.SimpleUDPClient(IP, PORT)
-
-
 class PosenetHandler:
     def __init__(self, device=0, cap_width=960, cap_height=540, use_static_image_mode=True,
-                 min_detection_confidence=0.7, min_tracking_confidence=0.5):
+                 min_detection_confidence=0.7, min_tracking_confidence=0.5, communication_queue: Queue = None):
         self.cap = cv.VideoCapture(device)
         self.cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
         self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
@@ -31,6 +24,8 @@ class PosenetHandler:
         )
 
         self.cvFpsCalc = CvFpsCalc(buffer_len=10)
+
+        self.communication_queue = communication_queue
 
     def start(self):
         self.run()
@@ -82,7 +77,8 @@ class PosenetHandler:
 
                 if gesture is not None:
                     if gesture != prev_gesture:
-                        client.send_message("/gesture", gesture)
+                        self.communication_queue.put(("/gesture", gesture))
+                        # client.send_message("/gesture", gesture)
                     cv.putText(image, str(gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
                     prev_gesture = gesture
 
@@ -98,7 +94,8 @@ class PosenetHandler:
                 shoulder_z = (landmarks[self.holistic.PoseLandmark.RIGHT_SHOULDER.value].z + landmarks[
                     self.holistic.PoseLandmark.LEFT_SHOULDER.value].z) / 2
                 if prev_gesture == 'wave_hello':
-                    client.send_message("/head", [head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z])
+                    self.communication_queue.put(("/head", [head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z]))
+                    # client.send_message("/head", [head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z])
                     print("Head: ", head_x, head_y)
 
             cv.putText(image, str(int(fps)) + " FPS", (10, 70), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
