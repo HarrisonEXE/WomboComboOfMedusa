@@ -1,3 +1,4 @@
+
 from pythonosc import udp_client
 from datetime import datetime, timedelta
 import time
@@ -10,11 +11,11 @@ from Handlers.DrawingHandler import DrawingHandler
 from Helpers.CvFpsCalc import CvFpsCalc
 from Helpers.HandGestures import *
 
-# UDP Client
-global client
-PORT = 12346
-IP = "192.168.2.2"
-client = udp_client.SimpleUDPClient(IP, PORT)
+# # UDP Client
+# global client
+# PORT = 12346
+# IP = "192.168.2.2"
+# client = udp_client.SimpleUDPClient(IP, PORT)
 
 
 # TODO: Add wave detection
@@ -152,13 +153,32 @@ class VisionHandler:
                 image_rows, image_cols, _ = image.shape
 
                 # detect gestures
-                self.detect_twirl(landmarks, results)
-                self.detect_stop_go(landmarks, results)
-                self.detect_swipe(landmarks, results)
+                self.detect_twirl(landmarks, "R")
+                self.detect_stop_go(landmarks, "R")
+                self.detect_swipe(landmarks, "R")
 
                 if self.curr_gesture is not None:
-                    if self.curr_gesture != self.prev_gesture:
-                        client.send_message("/gesture", self.curr_gesture)
+                    if self.curr_gesture != "":
+                        print(self.curr_gesture)
+                    # if self.curr_gesture != self.prev_gesture:
+                    #     client.send_message("/gesture", self.curr_gesture)
+                    cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+                    self.prev_gesture = self.curr_gesture
+
+            if results.left_hand_landmarks:
+                landmarks = results.right_hand_landmarks
+                image_rows, image_cols, _ = image.shape
+
+                # detect gestures
+                self.detect_twirl(landmarks, "L")
+                self.detect_stop_go(landmarks, "L")
+                self.detect_swipe(landmarks, "L")
+
+                if self.curr_gesture is not None:
+                    if self.curr_gesture != "":
+                        print(self.curr_gesture)
+                    # if self.curr_gesture != self.prev_gesture:
+                    #     client.send_message("/gesture", self.curr_gesture)
                     cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
                     self.prev_gesture = self.curr_gesture
 
@@ -174,8 +194,8 @@ class VisionHandler:
                 shoulder_z = (landmarks[self.holistic.PoseLandmark.RIGHT_SHOULDER.value].z + landmarks[
                     self.holistic.PoseLandmark.LEFT_SHOULDER.value].z) / 2
                 # TODO: This will never be true since we don't have wave_hello anymore!!!
-                if self.prev_gesture == 'wave_hello':
-                    client.send_message("/live", [head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z])
+                # if self.prev_gesture == 'wave_hello':
+                #     client.send_message("/live", [head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z])
                     # print("Head: ", head_x, head_y)
                     # print("Shoulder: ", shoulder_x, shoulder_y)
             cv.putText(image, str(int(fps)) + " FPS", (10, 70), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)

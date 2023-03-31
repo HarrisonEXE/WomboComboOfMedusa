@@ -32,12 +32,8 @@ def detectOpen(hand_landmarks):
         return False
 
 
-def detectBack(hand_landmarks, results):
-    for idx, hand_handedness in enumerate(results.multi_handedness):
-        handedness_dict = MessageToDict(hand_handedness)
-        handedness = handedness_dict["classification"][0]["label"]
-
-    if (handedness == "Right"):
+def detectBack(hand_landmarks, handedness):
+    if (handedness == "R"):
         if (hand_landmarks.landmark[17].x < hand_landmarks.landmark[13].x < hand_landmarks.landmark[9].x < hand_landmarks.landmark[5].x):
             return True
     else:
@@ -46,8 +42,8 @@ def detectBack(hand_landmarks, results):
     return False
 
 
-def detectTwirlEnd(hand_landmarks, results):
-    back = detectBack(hand_landmarks, results)
+def detectTwirlEnd(hand_landmarks, handedness):
+    back = detectBack(hand_landmarks, handedness)
     near = isNear(hand_landmarks.landmark[8], hand_landmarks.landmark[12], .06) and isNear(hand_landmarks.landmark[12], hand_landmarks.landmark[16], .06) and isNear(hand_landmarks.landmark[16], hand_landmarks.landmark[20], .08)
     thumbBack = hand_landmarks.landmark[4].z > hand_landmarks.landmark[8].z and hand_landmarks.landmark[4].z > hand_landmarks.landmark[12].z and hand_landmarks.landmark[4].z > hand_landmarks.landmark[16].z
     upright = detectUpright(hand_landmarks)
@@ -69,12 +65,8 @@ def detectUpright(hand_landmarks):
     else: return False
 
 
-def detectFront(hand_landmarks, results):
-    for idx, hand_handedness in enumerate(results.multi_handedness):
-        handedness_dict = MessageToDict(hand_handedness)
-        handedness = handedness_dict["classification"][0]["label"]
-
-    if (handedness == "Right"):
+def detectFront(hand_landmarks, handedness):
+    if (handedness == "R"):
         if (hand_landmarks.landmark[17].x > hand_landmarks.landmark[13].x > hand_landmarks.landmark[9].x > hand_landmarks.landmark[5].x) and (hand_landmarks.landmark[18].x > hand_landmarks.landmark[14].x > hand_landmarks.landmark[10].x > hand_landmarks.landmark[6].x) and (hand_landmarks.landmark[19].x > hand_landmarks.landmark[15].x > hand_landmarks.landmark[11].x > hand_landmarks.landmark[7].x) and (hand_landmarks.landmark[20].x > hand_landmarks.landmark[16].x > hand_landmarks.landmark[12].x > hand_landmarks.landmark[8].x):
             return True
     else:
@@ -93,11 +85,7 @@ def detectStraight(hand_landmarks):
     return True
 
 
-def detectFlat(hand_landmarks, results):
-    for idx, hand_handedness in enumerate(results.multi_handedness):
-        handedness_dict = MessageToDict(hand_handedness)
-        handedness = handedness_dict["classification"][0]["label"]
-
+def detectFlat(hand_landmarks, handedness):
     length = determineLength(hand_landmarks)
     straight = detectStraight(hand_landmarks)
 
@@ -167,18 +155,18 @@ def detectNear1D(fingerOne, fingerTwo, threshold):
     return abs(fingerOne - fingerTwo) < threshold
 
 
-def detectBasic(hand_landmarks, results):
-    return detectStraight(hand_landmarks) and detectUpright(hand_landmarks) and detectFront(hand_landmarks, results)
+def detectBasic(hand_landmarks, handedness):
+    return detectStraight(hand_landmarks) and detectUpright(hand_landmarks) and detectFront(hand_landmarks, handedness)
 
 
-def detectSideways(hand_landmarks, results):
+def detectSideways(hand_landmarks, handedness):
     poseCheck = hand_landmarks.landmark[5].y < hand_landmarks.landmark[9].y < hand_landmarks.landmark[13].y < hand_landmarks.landmark[17].y
     xAxisCheck = detectNear1D(hand_landmarks.landmark[5].x, hand_landmarks.landmark[9].x, .02) and detectNear1D(hand_landmarks.landmark[9].x, hand_landmarks.landmark[13].x, .02) and detectNear1D(hand_landmarks.landmark[13].x, hand_landmarks.landmark[17].x, .02) and detectNear1D(hand_landmarks.landmark[5].x, hand_landmarks.landmark[17].x, .02)
 
     return poseCheck and xAxisCheck
 
 
-def detectClosed(hand_landmarks, results):
+def detectClosed(hand_landmarks, handedness):
     firstFingerClosed = False
     secondFingerClosed = False
     thirdFingerClosed = False
