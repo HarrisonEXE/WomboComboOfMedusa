@@ -1,7 +1,5 @@
-
-from pythonosc import udp_client
 from datetime import datetime, timedelta
-import time
+from queue import Queue
 
 import cv2 as cv
 import mediapipe as mp
@@ -11,20 +9,10 @@ from Handlers.DrawingHandler import DrawingHandler
 from Helpers.CvFpsCalc import CvFpsCalc
 from Helpers.HandGestures import *
 
-# # UDP Client
-# global client
-# PORT = 12346
-# IP = "192.168.2.2"
-# client = udp_client.SimpleUDPClient(IP, PORT)
-
-
-# TODO: Add wave detection
-# TODO: Check stop/go detection client message
-# TODO: Standardize gesture messages to be sent to client
 
 class VisionHandler:
     def __init__(self, device=0, cap_width=960, cap_height=540, use_static_image_mode=True,
-                 min_detection_confidence=0.7, min_tracking_confidence=0.5):
+                 min_detection_confidence=0.7, min_tracking_confidence=0.5, communication_queue: Queue = None):
         self.cap = cv.VideoCapture(device)
         self.cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
         self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
@@ -38,6 +26,7 @@ class VisionHandler:
         )
 
         self.cvFpsCalc = CvFpsCalc(buffer_len=10)
+        self.communication_queue = communication_queue
 
     def start(self):
         self.run()
@@ -64,12 +53,13 @@ class VisionHandler:
         self.prev_gesture = ""
         self.curr_gesture = ""
 
-    def detect_twirl(self, landmarks, results):
-        if detectBasic(landmarks, results):
+    def detect_twirl(self, landmarks, handedness):
+        if detectBasic(landmarks, handedness):
             self.curr_time_twirl = datetime.now()
             self.count_twirl = 0
 
-        if self.curr_time_twirl is not None and detectTwirlEnd(landmarks, results) and self.curr_time_twirl + timedelta(
+        if self.curr_time_twirl is not None and detectTwirlEnd(landmarks,
+                                                               handedness) and self.curr_time_twirl + timedelta(
                 seconds=2) > datetime.now():
             self.count_twirl += 1
 
@@ -77,11 +67,11 @@ class VisionHandler:
             # client.send_message("/gesture", 3)
             self.curr_gesture = "twirl"
             print("twirl now")
-            time.sleep(5)
+            # time.sleep(5)
             self.count_twirl = 0
 
-    def detect_stop_go(self, landmarks, results):
-        if detectClosed(landmarks, results):
+    def detect_stop_go(self, landmarks, handedness):
+        if detectClosed(landmarks, handedness):
             self.count_go += 1
         else:
             self.count_go = 0
@@ -89,10 +79,10 @@ class VisionHandler:
         if self.count_go > 10:
             self.go = not self.go
             print("stop/go detected")
-            time.sleep(5)
+            # time.sleep(5)
             self.count_go = 0
 
-    def detect_swipe(self, landmarks, results):
+    def detect_swipe(self, landmarks, handedness):
         if self.curr_time_swipe is not None and datetime.now() > self.curr_time_swipe + timedelta(seconds=3):
             self.curr_time_swipe = None
             self.tracker_x = []
@@ -100,7 +90,7 @@ class VisionHandler:
             self.tracker_z = []
 
         else:
-            if detectSideways(landmarks, results):
+            if detectSideways(landmarks, handedness):
                 if len(self.tracker_x) == 0:
                     self.curr_time_swipe = datetime.now()
                 self.tracker_x.append(landmarks.landmark[8].x)
@@ -123,11 +113,9 @@ class VisionHandler:
                             self.tracker_x[int(len(self.tracker_x) / 2):]):
                         print("swipe right")
                         self.curr_gesture = "swipe_right"
-                        # client.send_message("/swipe", 0)
                     else:
                         print("swipe left")
                         self.curr_gesture = "swipe_left"
-                        # client.send_message("/swipe", 1)
                     self.tracker_x = []
                     self.tracker_y = []
                     self.tracker_z = []
@@ -158,10 +146,8 @@ class VisionHandler:
                 self.detect_swipe(landmarks, "R")
 
                 if self.curr_gesture is not None:
-                    if self.curr_gesture != "":
-                        print(self.curr_gesture)
-                    # if self.curr_gesture != self.prev_gesture:
-                    #     client.send_message("/gesture", self.curr_gesture)
+                    if self.curr_gesture != self.prev_gesture:
+                        self.communication_queue.put(("/gesture", self.curr_gesture))
                     cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
                     self.prev_gesture = self.curr_gesture
 
@@ -175,10 +161,8 @@ class VisionHandler:
                 self.detect_swipe(landmarks, "L")
 
                 if self.curr_gesture is not None:
-                    if self.curr_gesture != "":
-                        print(self.curr_gesture)
-                    # if self.curr_gesture != self.prev_gesture:
-                    #     client.send_message("/gesture", self.curr_gesture)
+                    if self.curr_gesture != self.prev_gesture:
+                        self.communication_queue.put(("/gesture", self.curr_gesture))
                     cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
                     self.prev_gesture = self.curr_gesture
 
@@ -194,10 +178,10 @@ class VisionHandler:
                 shoulder_z = (landmarks[self.holistic.PoseLandmark.RIGHT_SHOULDER.value].z + landmarks[
                     self.holistic.PoseLandmark.LEFT_SHOULDER.value].z) / 2
                 # TODO: This will never be true since we don't have wave_hello anymore!!!
-                # if self.prev_gesture == 'wave_hello':
-                #     client.send_message("/live", [head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z])
-                    # print("Head: ", head_x, head_y)
-                    # print("Shoulder: ", shoulder_x, shoulder_y)
+                if self.prev_gesture == 'wave_hello':
+                    self.communication_queue.put(
+                        ("/live", (head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z)))
+
             cv.putText(image, str(int(fps)) + " FPS", (10, 70), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
             cv.imshow('Gesture Recognition', image)
 

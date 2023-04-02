@@ -46,6 +46,6 @@ if __name__ == '__main__':
     # visionProcess.start()
     # audioProcess.start()
 
-    # visionHandler = VisionHandler()
-    # visionHandler.start()
-    MedusaDemo(RobotHandler()).run()
+    visionHandler = VisionHandler()
+    visionHandler.start()
+    # MedusaDemo(RobotHandler()).run()
