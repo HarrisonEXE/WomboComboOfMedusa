@@ -143,11 +143,15 @@ class VisionHandler:
                 self.detect_stop_go(landmarks, "R")
                 self.detect_swipe(landmarks, "R")
 
-                if self.curr_gesture is not None:
-                    if self.curr_gesture != self.prev_gesture:
-                        self.communication_queue.put(("/gesture", self.curr_gesture))
-                    cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
-                    self.prev_gesture = self.curr_gesture
+                # if self.curr_gesture is not None:
+                #     if self.curr_gesture != self.prev_gesture:
+                #         self.communication_queue.put(("/gesture", self.curr_gesture))
+                #     cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+                #     self.prev_gesture = self.curr_gesture
+                if self.curr_gesture is not None and self.curr_gesture != "":
+                    self.communication_queue.put(("/gesture", self.curr_gesture))
+                    self.curr_gesture = None
+
 
             if results.left_hand_landmarks:
                 landmarks = results.right_hand_landmarks
@@ -158,11 +162,14 @@ class VisionHandler:
                 self.detect_stop_go(landmarks, "L")
                 self.detect_swipe(landmarks, "L")
 
-                if self.curr_gesture is not None:
-                    if self.curr_gesture != self.prev_gesture:
-                        self.communication_queue.put(("/gesture", self.curr_gesture))
-                    cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
-                    self.prev_gesture = self.curr_gesture
+                # if self.curr_gesture is not None:
+                #     if self.curr_gesture != self.prev_gesture:
+                #         self.communication_queue.put(("/gesture", self.curr_gesture))
+                #     cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+                #     self.prev_gesture = self.curr_gesture
+                if self.curr_gesture is not None and self.curr_gesture != "":
+                    self.communication_queue.put(("/gesture", self.curr_gesture))
+                    self.curr_gesture = None
 
             if results.pose_landmarks is not None:
                 landmarks = results.pose_landmarks.landmark
