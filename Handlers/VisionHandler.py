@@ -11,9 +11,12 @@ from Helpers.HandGestures import *
 
 
 class VisionHandler:
-    def __init__(self, device=0, cap_width=960, cap_height=540, use_static_image_mode=True,
+    def __init__(self, device=6, cap_width=960, cap_height=540, use_static_image_mode=True,
                  min_detection_confidence=0.7, min_tracking_confidence=0.5, communication_queue: Queue = Queue()):
         self.cap = cv.VideoCapture(device)
+        if not self.cap.isOpened():
+            raise IOError("Cannot open webcam")
+
         self.cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
         self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
         self.drawingHandler = DrawingHandler(use_brect=True)
