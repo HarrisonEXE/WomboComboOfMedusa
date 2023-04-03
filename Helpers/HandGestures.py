@@ -1,12 +1,5 @@
-from google.protobuf.json_format import MessageToDict
 import math
-from datetime import datetime, timedelta
-import time
 import numpy as np
-
-#TODO: Removed redundant code
-#TODO: Merge with VisionHandler.py
-#TODO: Removed duplicate functions with VisionHandler.py
 
 def detectOpen(hand_landmarks):
     firstFingerIsOpen = False
@@ -34,18 +27,24 @@ def detectOpen(hand_landmarks):
 
 def detectBack(hand_landmarks, handedness):
     if (handedness == "R"):
-        if (hand_landmarks.landmark[17].x > hand_landmarks.landmark[13].x > hand_landmarks.landmark[9].x > hand_landmarks.landmark[5].x):
+        if (hand_landmarks.landmark[17].x > hand_landmarks.landmark[13].x > hand_landmarks.landmark[9].x >
+                hand_landmarks.landmark[5].x):
             return True
     else:
-        if (hand_landmarks.landmark[17].x < hand_landmarks.landmark[13].x < hand_landmarks.landmark[9].x < hand_landmarks.landmark[5].x):
+        if (hand_landmarks.landmark[17].x < hand_landmarks.landmark[13].x < hand_landmarks.landmark[9].x <
+                hand_landmarks.landmark[5].x):
             return True
     return False
 
 
 def detectTwirlEnd(hand_landmarks, handedness):
     back = detectBack(hand_landmarks, handedness)
-    near = isNear(hand_landmarks.landmark[8], hand_landmarks.landmark[12], .06) and isNear(hand_landmarks.landmark[12], hand_landmarks.landmark[16], .06) and isNear(hand_landmarks.landmark[16], hand_landmarks.landmark[20], .08)
-    thumbBack = hand_landmarks.landmark[4].z > hand_landmarks.landmark[8].z and hand_landmarks.landmark[4].z > hand_landmarks.landmark[12].z and hand_landmarks.landmark[4].z > hand_landmarks.landmark[16].z
+    near = isNear(hand_landmarks.landmark[8], hand_landmarks.landmark[12], .06) and isNear(hand_landmarks.landmark[12],
+                                                                                           hand_landmarks.landmark[16],
+                                                                                           .06) and isNear(
+        hand_landmarks.landmark[16], hand_landmarks.landmark[20], .08)
+    thumbBack = hand_landmarks.landmark[4].z > hand_landmarks.landmark[8].z and hand_landmarks.landmark[4].z > \
+                hand_landmarks.landmark[12].z and hand_landmarks.landmark[4].z > hand_landmarks.landmark[16].z
     upright = detectUpright(hand_landmarks)
 
     if (back and near and thumbBack and upright):
@@ -53,24 +52,31 @@ def detectTwirlEnd(hand_landmarks, handedness):
 
 
 def detectUpright(hand_landmarks):
-    pointerDistance = math.sqrt((hand_landmarks.landmark[8].x - hand_landmarks.landmark[5].x)**2 + (hand_landmarks.landmark[8].y - hand_landmarks.landmark[5].y)**2)
-    middleDistance = math.sqrt((hand_landmarks.landmark[12].x - hand_landmarks.landmark[9].x)**2 + (hand_landmarks.landmark[12].y - hand_landmarks.landmark[9].y)**2)
-    ringDistance = math.sqrt((hand_landmarks.landmark[16].x - hand_landmarks.landmark[13].x)**2 + (hand_landmarks.landmark[16].y - hand_landmarks.landmark[13].y)**2)
+    pointerDistance = math.sqrt((hand_landmarks.landmark[8].x - hand_landmarks.landmark[5].x) ** 2 + (
+                hand_landmarks.landmark[8].y - hand_landmarks.landmark[5].y) ** 2)
+    middleDistance = math.sqrt((hand_landmarks.landmark[12].x - hand_landmarks.landmark[9].x) ** 2 + (
+                hand_landmarks.landmark[12].y - hand_landmarks.landmark[9].y) ** 2)
+    ringDistance = math.sqrt((hand_landmarks.landmark[16].x - hand_landmarks.landmark[13].x) ** 2 + (
+                hand_landmarks.landmark[16].y - hand_landmarks.landmark[13].y) ** 2)
 
-    pointerStraight = hand_landmarks.landmark[8].y < abs(hand_landmarks.landmark[5].y - pointerDistance*4/5)
-    middleStraight = hand_landmarks.landmark[12].y < abs(hand_landmarks.landmark[9].y - middleDistance*4/5)
-    ringStraight = hand_landmarks.landmark[16].y < abs(hand_landmarks.landmark[13].y - ringDistance*4/5)
+    pointerStraight = hand_landmarks.landmark[8].y < abs(hand_landmarks.landmark[5].y - pointerDistance * 4 / 5)
+    middleStraight = hand_landmarks.landmark[12].y < abs(hand_landmarks.landmark[9].y - middleDistance * 4 / 5)
+    ringStraight = hand_landmarks.landmark[16].y < abs(hand_landmarks.landmark[13].y - ringDistance * 4 / 5)
 
-    if (pointerStraight and middleStraight and ringStraight): return True
-    else: return False
+    if (pointerStraight and middleStraight and ringStraight):
+        return True
+    else:
+        return False
 
 
 def detectFront(hand_landmarks, handedness):
     if (handedness == "R"):
-        if (hand_landmarks.landmark[17].x < hand_landmarks.landmark[13].x < hand_landmarks.landmark[9].x < hand_landmarks.landmark[5].x):
+        if (hand_landmarks.landmark[17].x < hand_landmarks.landmark[13].x < hand_landmarks.landmark[9].x <
+                hand_landmarks.landmark[5].x):
             return True
     else:
-        if (hand_landmarks.landmark[17].x > hand_landmarks.landmark[13].x > hand_landmarks.landmark[9].x > hand_landmarks.landmark[5].x):
+        if (hand_landmarks.landmark[17].x > hand_landmarks.landmark[13].x > hand_landmarks.landmark[9].x >
+                hand_landmarks.landmark[5].x):
             return True
     return False
 
@@ -89,26 +95,28 @@ def detectFlat(hand_landmarks, handedness):
     length = determineLength(hand_landmarks)
     straight = detectStraight(hand_landmarks)
 
-    line = sameLine(hand_landmarks.landmark[4], hand_landmarks.landmark[8], hand_landmarks.landmark[12], hand_landmarks.landmark[16], hand_landmarks.landmark[20], "y", length[2])
+    line = sameLine(hand_landmarks.landmark[4], hand_landmarks.landmark[8], hand_landmarks.landmark[12],
+                    hand_landmarks.landmark[16], hand_landmarks.landmark[20], "y", length[2])
 
-    if line and straight: return True
-    else: return False
+    if line and straight:
+        return True
+    else:
+        return False
 
 
 def variance(data_y):
-    # Number of observations
-    n = len(data_y)
-    # Mean of the data
-    mean = sum(data_y) / n
-    # Square deviations
-    deviations = [(y - mean) ** 2 for y in data_y]
-    # Variance
-    variance = sum(deviations) / n
+    data_np = np.array(data_y)
+    mean = np.mean(data_np)
+    deviations = data_np - mean
+    variance = np.mean(deviations ** 2)
     return variance
 
 
 def euclideanDistance(fingerOne, fingerTwo):
-    return math.sqrt(math.pow((fingerOne.x-fingerTwo.x),2) + math.pow((fingerOne.y-fingerTwo.y),2) + math.pow((fingerOne.z-fingerTwo.z), 2))
+    fingerOne_np = np.array([fingerOne.x, fingerOne.y, fingerOne.z])
+    fingerTwo_np = np.array([fingerTwo.x, fingerTwo.y, fingerTwo.z])
+    distance = np.linalg.norm(fingerOne_np - fingerTwo_np)
+    return distance
 
 
 def isNear(fingerOne, fingerTwo, threshold):
@@ -160,8 +168,12 @@ def detectBasic(hand_landmarks, handedness):
 
 
 def detectSideways(hand_landmarks, handedness):
-    poseCheck = hand_landmarks.landmark[5].y < hand_landmarks.landmark[9].y < hand_landmarks.landmark[13].y < hand_landmarks.landmark[17].y
-    xAxisCheck = detectNear1D(hand_landmarks.landmark[5].x, hand_landmarks.landmark[9].x, .02) and detectNear1D(hand_landmarks.landmark[9].x, hand_landmarks.landmark[13].x, .02) and detectNear1D(hand_landmarks.landmark[13].x, hand_landmarks.landmark[17].x, .02) and detectNear1D(hand_landmarks.landmark[5].x, hand_landmarks.landmark[17].x, .02)
+    poseCheck = hand_landmarks.landmark[5].y < hand_landmarks.landmark[9].y < hand_landmarks.landmark[13].y < \
+                hand_landmarks.landmark[17].y
+    xAxisCheck = detectNear1D(hand_landmarks.landmark[5].x, hand_landmarks.landmark[9].x, .02) and detectNear1D(
+        hand_landmarks.landmark[9].x, hand_landmarks.landmark[13].x, .02) and detectNear1D(
+        hand_landmarks.landmark[13].x, hand_landmarks.landmark[17].x, .02) and detectNear1D(
+        hand_landmarks.landmark[5].x, hand_landmarks.landmark[17].x, .02)
 
     return poseCheck and xAxisCheck
 
@@ -172,10 +184,16 @@ def detectClosed(hand_landmarks, handedness):
     thirdFingerClosed = False
     fourthFingerClosed = False
 
-    if hand_landmarks.landmark[8].y > hand_landmarks.landmark[5].y and hand_landmarks.landmark[6].y < hand_landmarks.landmark[5].y: firstFingerClosed = True
-    if hand_landmarks.landmark[12].y > hand_landmarks.landmark[9].y and hand_landmarks.landmark[10].y < hand_landmarks.landmark[9].y: secondFingerClosed = True
-    if hand_landmarks.landmark[16].y > hand_landmarks.landmark[13].y and hand_landmarks.landmark[14].y < hand_landmarks.landmark[13].y: thirdFingerClosed = True
-    if hand_landmarks.landmark[20].y > hand_landmarks.landmark[17].y and hand_landmarks.landmark[18].y < hand_landmarks.landmark[17].y: fourthFingerClosed = True
+    if hand_landmarks.landmark[8].y > hand_landmarks.landmark[5].y and hand_landmarks.landmark[6].y < \
+            hand_landmarks.landmark[5].y: firstFingerClosed = True
+    if hand_landmarks.landmark[12].y > hand_landmarks.landmark[9].y and hand_landmarks.landmark[10].y < \
+            hand_landmarks.landmark[9].y: secondFingerClosed = True
+    if hand_landmarks.landmark[16].y > hand_landmarks.landmark[13].y and hand_landmarks.landmark[14].y < \
+            hand_landmarks.landmark[13].y: thirdFingerClosed = True
+    if hand_landmarks.landmark[20].y > hand_landmarks.landmark[17].y and hand_landmarks.landmark[18].y < \
+            hand_landmarks.landmark[17].y: fourthFingerClosed = True
 
-    if firstFingerClosed and secondFingerClosed and thirdFingerClosed and fourthFingerClosed: return True
-    else: return False
+    if firstFingerClosed and secondFingerClosed and thirdFingerClosed and fourthFingerClosed:
+        return True
+    else:
+        return False

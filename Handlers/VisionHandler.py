@@ -12,7 +12,7 @@ from Helpers.HandGestures import *
 
 class VisionHandler:
     def __init__(self, device=0, cap_width=960, cap_height=540, use_static_image_mode=True,
-                 min_detection_confidence=0.7, min_tracking_confidence=0.5, communication_queue: Queue = None):
+                 min_detection_confidence=0.7, min_tracking_confidence=0.5, communication_queue: Queue = Queue()):
         self.cap = cv.VideoCapture(device)
         self.cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
         self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
@@ -88,7 +88,7 @@ class VisionHandler:
             self.tracker_x = []
             self.tracker_y = []
             self.tracker_z = []
-
+            self.distance = []
         else:
             if detectSideways(landmarks, handedness):
                 if len(self.tracker_x) == 0:
@@ -96,24 +96,26 @@ class VisionHandler:
                 self.tracker_x.append(landmarks.landmark[8].x)
                 self.tracker_y.append(landmarks.landmark[8].y)
                 self.tracker_z.append(landmarks.landmark[8].z)
-                self.distance.append(euclideanDistance(landmarks.landmark[12], landmarks.landmark[0]))
+
+                # Compute the Euclidean distance between two landmarks
+                distance = euclideanDistance(landmarks.landmark[12], landmarks.landmark[0])
+                self.distance.append(distance)
 
                 vari = variance(self.tracker_y)
 
+                # a, b = np.polyfit(x, y, 1)
                 x = np.array(self.tracker_x)
                 y = np.array(self.tracker_y)
+                A = np.vstack([x, np.ones(len(x))]).T
+                a, b = np.linalg.lstsq(A, y, rcond=None)[0]
 
-                a, b = np.polyfit(x, y, 1)
+                mean_distance = np.mean(self.distance)
 
-                mean_distance = sum(self.distance) / len(self.distance)
-
-                if abs(max(self.tracker_x) - min(self.tracker_x)) >= 1.5 * mean_distance and vari < .002 and abs(
-                        a) < .15:
-                    if sum(self.tracker_x[0:int(len(self.tracker_x) / 2)]) < sum(
-                            self.tracker_x[int(len(self.tracker_x) / 2):]):
-                        self.curr_gesture = "swipe_right"
-                    else:
+                if abs(np.max(self.tracker_x) - np.min(self.tracker_x)) >= 1.5 * mean_distance and vari < .002 and abs(a) < .15:
+                    if np.sum(self.tracker_x[0:int(len(self.tracker_x) / 2)]) < np.sum(self.tracker_x[int(len(self.tracker_x) / 2):]):
                         self.curr_gesture = "swipe_left"
+                    else:
+                        self.curr_gesture = "swipe_right"
                     self.tracker_x = []
                     self.tracker_y = []
                     self.tracker_z = []
@@ -134,7 +136,7 @@ class VisionHandler:
 
             self.drawingHandler.draw_styled_landmarks(image, results)
 
-            if results.right_hand_landmarks:
+            if results.right_hand_landmarks is not None:
                 landmarks = results.right_hand_landmarks
                 image_rows, image_cols, _ = image.shape
 
@@ -143,33 +145,27 @@ class VisionHandler:
                 self.detect_stop_go(landmarks, "R")
                 self.detect_swipe(landmarks, "R")
 
-                # if self.curr_gesture is not None:
-                #     if self.curr_gesture != self.prev_gesture:
-                #         self.communication_queue.put(("/gesture", self.curr_gesture))
-                #     cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
-                #     self.prev_gesture = self.curr_gesture
                 if self.curr_gesture is not None and self.curr_gesture != "":
                     self.communication_queue.put(("/gesture", self.curr_gesture))
+                    # print(self.curr_gesture)
                     self.curr_gesture = None
 
+                cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
 
-            if results.left_hand_landmarks:
-                landmarks = results.right_hand_landmarks
+
+            if results.left_hand_landmarks is not None:
+                landmarks = results.left_hand_landmarks
                 image_rows, image_cols, _ = image.shape
-
                 # detect gestures
                 self.detect_twirl(landmarks, "L")
                 self.detect_stop_go(landmarks, "L")
                 self.detect_swipe(landmarks, "L")
 
-                # if self.curr_gesture is not None:
-                #     if self.curr_gesture != self.prev_gesture:
-                #         self.communication_queue.put(("/gesture", self.curr_gesture))
-                #     cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
-                #     self.prev_gesture = self.curr_gesture
                 if self.curr_gesture is not None and self.curr_gesture != "":
                     self.communication_queue.put(("/gesture", self.curr_gesture))
                     self.curr_gesture = None
+
+                cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
 
             if results.pose_landmarks is not None:
                 landmarks = results.pose_landmarks.landmark
@@ -183,9 +179,8 @@ class VisionHandler:
                 shoulder_z = (landmarks[self.holistic.PoseLandmark.RIGHT_SHOULDER.value].z + landmarks[
                     self.holistic.PoseLandmark.LEFT_SHOULDER.value].z) / 2
                 # TODO: This will never be true since we don't have wave_hello anymore!!!
-                if self.prev_gesture == 'wave_hello':
-                    self.communication_queue.put(
-                        ("/live", (head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z)))
+                if self.curr_gesture == 'wave':
+                    self.communication_queue.put(("/live", (head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z)))
 
             cv.putText(image, str(int(fps)) + " FPS", (10, 70), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
             cv.imshow('Gesture Recognition', image)
