@@ -48,6 +48,7 @@ class VisionHandler:
         # stop/go variables
         self.count_go = 0
         self.go = False
+        self.go_last_detected = None
 
         # gesture variables
         self.prev_gesture = ""
@@ -64,10 +65,8 @@ class VisionHandler:
             self.count_twirl += 1
 
         if self.count_twirl > 15:
-            # client.send_message("/gesture", 3)
             self.curr_gesture = "twirl"
-            print("twirl now")
-            # time.sleep(5)
+            self.curr_time_twirl = None
             self.count_twirl = 0
 
     def detect_stop_go(self, landmarks, handedness):
@@ -76,10 +75,11 @@ class VisionHandler:
         else:
             self.count_go = 0
 
-        if self.count_go > 10:
+        if self.count_go > 10 and (self.go_last_detected is None or self.go_last_detected + timedelta(seconds = 5) < datetime.now()):
             self.go = not self.go
-            print("stop/go detected")
-            # time.sleep(5)
+            if self.go: self.curr_gesture = "stop"
+            else: self.curr_gesture = "go"
+            self.go_last_detected = datetime.now()
             self.count_go = 0
 
     def detect_swipe(self, landmarks, handedness):
@@ -111,10 +111,8 @@ class VisionHandler:
                         a) < .15:
                     if sum(self.tracker_x[0:int(len(self.tracker_x) / 2)]) < sum(
                             self.tracker_x[int(len(self.tracker_x) / 2):]):
-                        print("swipe right")
                         self.curr_gesture = "swipe_right"
                     else:
-                        print("swipe left")
                         self.curr_gesture = "swipe_left"
                     self.tracker_x = []
                     self.tracker_y = []
