@@ -6,6 +6,7 @@ class VoiceDemo(IRobotDemo):
     def __init__(self, robotHandler, is_lab_work=True):
         super().__init__(robotHandler, is_lab_work)
         self.name = "Voice Recognition Demo"
+        self.micName = "USB  Live camera: Audio (hw:2,0)"
 
     def start(self):
         self.readyRobotsWithoutLive()
@@ -13,7 +14,11 @@ class VoiceDemo(IRobotDemo):
         self.listen(r)
 
     def listen(self, r):
-        with sr.Microphone() as source:
+        ###### change this variable to match needed mic ######
+        micIndex = sr.Microphone.list_microphone_names().index(self.micName)
+
+        mic = sr.Microphone(micIndex) # set mic
+        with mic as source:
             while self.running:
                 print("Speak a command.")
                 r.adjust_for_ambient_noise(source, duration=0.2)

@@ -11,6 +11,8 @@ from Handlers.VisionHandler import VisionHandler
 
 from multiprocessing import Process
 
+from Performance import Performance
+
 
 class MedusaDemo:
     def __init__(self, robotHandler):
@@ -46,6 +48,9 @@ if __name__ == '__main__':
     # visionProcess.start()
     # audioProcess.start()
 
-    visionHandler = VisionHandler()
-    visionHandler.start()
+    # visionHandler = VisionHandler()
+    # visionHandler.start()
     # MedusaDemo(RobotHandler()).run()
+    robotHandler = RobotHandler(is_lab_work=True)
+    performance = Performance(robotHandler, is_lab_work=True)
+    performance.runSequence()

@@ -14,4 +14,5 @@ class IDemo(ABC):
         print(f"Now running {self.name}...\n")
 
     def kill(self):
+        print("Killing demo...")
         self.running = False

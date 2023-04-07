@@ -107,15 +107,20 @@ class IMicDemo(IRobotDemo):
         return phrase
 
     def _process(self):
-        if not self.running:
-            print("Demo has been killed.")
-            return
-        self.waitForInput()
-        phrase = self.inputToPhrase()
-        if phrase:
-            phrase = self.alterPhrase(phrase)
-            self.performance_handler.perform(phrase)
-        self._process()
+        try:
+            if not self.running:
+                print("Demo has been killed.")
+                return
+
+            self.waitForInput()
+            phrase = self.inputToPhrase()
+            if phrase:
+                phrase = self.alterPhrase(phrase)
+                self.performance_handler.perform(phrase)
+            self._process()
+        except ValueError:
+            print("Mic Demo was forcefully stopped.")
+
 
     def listener(self, in_data: bytes, frame_count: int, time_info: Dict[str, float], status: int) -> Tuple[
             bytes, int]:

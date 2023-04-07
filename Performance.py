@@ -13,7 +13,7 @@ class Performance:
         self.voiceDemo = HaltableVoiceDemo(robotHandler, is_lab_work)
         self.micDemo = HaltableMicDemo(
             robotHandler, is_lab_work, robots_already_awake=True)
-        # self.visionTrackerDemo = VisionTrackerDemo(robotHandler, is_lab_work)
+        self.visionTrackerDemo = VisionTrackerDemo(robotHandler, is_lab_work)
 
         self.mainThread = Thread()
 
@@ -41,17 +41,15 @@ class Performance:
         # 0:31 - 3:30 ------------ 2 -
         # Xylophone Mimicking (Audio)
         # ----------------------------
-        # mainThread = Thread(target=self.visionTrackerDemo.start)
-        # mainThread.start()
+        mainThread = Thread(target=self.visionTrackerDemo.start)
+        mainThread.start()
 
         # END--------------------- 2 -
         # Xylophone Mimicking (Audio)
         # ----------------------------
-        mainThread = Thread(target=self.voiceDemo.start)
-        mainThread.start()
-        mainThread.join()
+        # mainThread = Thread(target=self.voiceDemo.start)
+        # mainThread.start()
+        # mainThread.join()
 
 
-robotHandler = RobotHandler(is_lab_work=False)
-performance = Performance(robotHandler, is_lab_work=False)
-performance.runSequence()
+

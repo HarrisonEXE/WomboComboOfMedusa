@@ -6,6 +6,7 @@ class HaltableVoiceDemo(IRobotDemo):
     def __init__(self, robotHandler, is_lab_work=True):
         super().__init__(robotHandler, is_lab_work)
         self.name = "Haltable Voice Recognition Demo"
+        self.micName = "USB  Live camera: Audio (hw:2,0)"
 
     def start(self):
         self.announceStart()
@@ -15,7 +16,9 @@ class HaltableVoiceDemo(IRobotDemo):
         return self.listen(r)
 
     def listen(self, r):
-        with sr.Microphone() as source:
+        micIndex = sr.Microphone.list_microphone_names().index(self.micName)
+        mic = sr.Microphone(micIndex)  # set mic
+        with mic as source:
             while self.running:
                 print("Speak a command.")
                 r.adjust_for_ambient_noise(source, duration=0.2)

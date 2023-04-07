@@ -35,7 +35,7 @@ class VisionTrackerDemo(IRobotDemo):
 
     def start(self):
         self.announceStart()
-        self.readyRobots()
+        # self.readyRobots()
         self.vision_thread.start()
 
     # TODO: Add a method to stop the server.
