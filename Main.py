@@ -4,6 +4,7 @@ from Demos.KeyboardRobotlessDemo import KeyboardRobotlessDemo
 from Demos.MicDemo import MicDemo
 from Demos.RandomizedMicDemo import RandomizedMicDemo
 from Demos.VoiceRecognizer import VoiceDemo
+from Demos.VisionTrackerDemo import VisionTrackerDemo
 from Handlers.RobotHandler import RobotHandler
 # from test import mainmethod
 from Handlers.VisionHandler import VisionHandler
@@ -19,22 +20,23 @@ class MedusaDemo:
         self.mic_demo = MicDemo(robotHandler, is_lab_work=False)
         self.randomized_mic_demo = RandomizedMicDemo(robotHandler)
         self.voice_demo = VoiceDemo(robotHandler)
+        self.vision_tracker_demo = VisionTrackerDemo(robotHandler)
 
-        self.current_demo = self.mic_demo
+        self.current_demo = self.vision_tracker_demo
 
     def run(self):
         self.current_demo.start()
 
 
-def f():
-    mainmethod()
-
-
-def g():
-    robotHandler = RobotHandler()
-    is_lab_work = False
-    demo = MedusaDemo(robotHandler)
-    demo.run()
+# def f():
+#     mainmethod()
+#
+#
+# def g():
+#     robotHandler = RobotHandler()
+#     is_lab_work = False
+#     demo = MedusaDemo(robotHandler)
+#     demo.run()
 
 
 if __name__ == '__main__':
@@ -46,3 +48,4 @@ if __name__ == '__main__':
 
     visionHandler = VisionHandler()
     visionHandler.start()
+    # MedusaDemo(RobotHandler()).run()

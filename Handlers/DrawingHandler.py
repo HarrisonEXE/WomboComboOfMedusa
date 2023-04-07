@@ -1,9 +1,12 @@
 import cv2 as cv
+import mediapipe as mp
 
 
 class DrawingHandler():
     def __init__(self, use_brect=True):
         self.use_brect = use_brect
+        self.mp_drawing = mp.solutions.drawing_utils
+        self.mp_holistic = mp.solutions.holistic
 
     def draw_landmarks(self, image, landmark_point):
         # 接続線
@@ -265,3 +268,26 @@ class DrawingHandler():
                        cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
                        cv.LINE_AA)
         return image
+
+    def draw_styled_landmarks(self, image, results):
+        # Draw pose connections
+        self.mp_drawing.draw_landmarks(
+            image, results.pose_landmarks, self.mp_holistic.POSE_CONNECTIONS)
+
+        # Draw left hand connections
+        self.mp_drawing.draw_landmarks(
+            image=image,
+            landmark_list=results.left_hand_landmarks,
+            connections=self.mp_holistic.HAND_CONNECTIONS,
+            landmark_drawing_spec=self.mp_drawing.DrawingSpec(color=(121, 22, 76), thickness=2, circle_radius=4),
+            connection_drawing_spec=self.mp_drawing.DrawingSpec(color=(121, 44, 250), thickness=2, circle_radius=2)
+        )
+
+        # Draw right hand connections
+        self.mp_drawing.draw_landmarks(
+            image=image,
+            landmark_list=results.right_hand_landmarks,
+            connections=self.mp_holistic.HAND_CONNECTIONS,
+            landmark_drawing_spec=self.mp_drawing.DrawingSpec(color=(245, 117, 66), thickness=2, circle_radius=4),
+            connection_drawing_spec=self.mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2, circle_radius=2)
+        )

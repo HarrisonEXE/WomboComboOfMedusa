@@ -1,0 +1,13 @@
+/xarm/
+.idea/
+*.iml
+*.ipr
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.ipynb_checkpoints/
+*.egg-info/
+*.egg
+*.egg-info
+/__pycache__/

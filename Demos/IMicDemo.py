@@ -1,4 +1,6 @@
 import numpy as np
+from typing import Tuple, Dict
+
 import pyaudio
 import time
 
@@ -108,7 +110,7 @@ class IMicDemo(IRobotDemo):
             self.performance_handler.perform(phrase)
         self._process()
 
-    def listener(self, in_data: bytes, frame_count: int, time_info: dict[str, float], status: int) -> tuple[
+    def listener(self, in_data: bytes, frame_count: int, time_info: Dict[str, float], status: int) -> Tuple[
             bytes, int]:
         if not self.active:
             self.reset_var()
