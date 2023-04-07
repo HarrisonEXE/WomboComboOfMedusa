@@ -1,5 +1,5 @@
 import speech_recognition as sr
-from Demos.IRobotDemo import IRobotDemo
+from Demos.Interfaces.IRobotDemo import IRobotDemo
 
 
 class VoiceDemo(IRobotDemo):

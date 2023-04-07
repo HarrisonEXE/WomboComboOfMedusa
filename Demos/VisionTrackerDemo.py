@@ -1,4 +1,4 @@
-from Demos.IRobotDemo import IRobotDemo
+from Demos.Interfaces.IRobotDemo import IRobotDemo
 from Handlers.RobotHandler import RobotHandler
 from Handlers.PosenetHandler import PosenetHandler
 from Handlers.VisionHandler import VisionHandler

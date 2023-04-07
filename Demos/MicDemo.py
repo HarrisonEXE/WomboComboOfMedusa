@@ -1,4 +1,4 @@
-from Demos.IMicDemo import IMicDemo
+from Demos.Interfaces.IMicDemo import IMicDemo
 
 
 # Purely for documentation purposes

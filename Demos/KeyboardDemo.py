@@ -1,5 +1,5 @@
-from Demos.IDemo import IDemo
-from Demos.IRobotDemo import IRobotDemo
+from Demos.Interfaces.IDemo import IDemo
+from Demos.Interfaces.IRobotDemo import IRobotDemo
 from Handlers.InputHandler import getManualInput
 from Handlers.RobotHandler import RobotHandler
 

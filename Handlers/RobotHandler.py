@@ -70,11 +70,16 @@ class RobotHandler:
         return [IP0, IP1, IP2, IP3, IP4]
 
     def setIPus(self):
-        IP0us = [-0.25 - self.basesamp / 2, 87.5 - self.usamp, -2, 126.5, 0, 51.7, -45]
-        IP1us = [2.67 - self.basesamp / 2, 86.32 - self.usamp, 0, 127.1, 0, 50.1, -45]
-        IP2us = [1.3 - self.basesamp / 2, 81.8 - self.usamp, 0, 120, 0, 54.2, -45]
-        IP3us = [-1.4 - self.basesamp / 2, 83.95 - self.usamp, 0, 120, 0, 50.75, -45]
-        IP4us = [-1.8 - self.basesamp / 2, 81.88 - self.usamp, 0, 120, 0, 50.75, -45]
+        IP0us = [-0.25 - self.basesamp / 2, 87.5 -
+                 self.usamp, -2, 126.5, 0, 51.7, -45]
+        IP1us = [2.67 - self.basesamp / 2, 86.32 -
+                 self.usamp, 0, 127.1, 0, 50.1, -45]
+        IP2us = [1.3 - self.basesamp / 2, 81.8 -
+                 self.usamp, 0, 120, 0, 54.2, -45]
+        IP3us = [-1.4 - self.basesamp / 2, 83.95 -
+                 self.usamp, 0, 120, 0, 50.75, -45]
+        IP4us = [-1.8 - self.basesamp / 2, 81.88 -
+                 self.usamp, 0, 120, 0, 50.75, -45]
         return [IP0us, IP1us, IP2us, IP3us, IP4us]
 
     def setupRobots(self):
@@ -144,32 +149,15 @@ class RobotHandler:
                 if arm.get_is_moving():
                     not_safe_to_continue = True
 
-    def playString(self, noteInfo):
-        degree, delay = noteInfo
-        degree -= 1
+    def playString(self, robotNum):
+        print(f"Loading note on {robotNum + 1}")
+        self.loadQueue(robotNum, 'strum', 'N/A')
 
-        time.sleep(delay)
-        print(f"Loading note {degree} with a {delay} delay")
-        self.loadQueue(degree, 'X')
-
-    def playStringTemp(self, noteInfo):
-        print(f"Loading note {noteInfo}")
-        self.loadQueue(noteInfo, 'X')
-
-    def playTestStringTemp(self, robotNum):
+    def playTestString(self, robotNum):
         print(f"Loading note on robot {robotNum + 1}")
 
-    def playTestString(self, noteInfo):
-        degree, delay = noteInfo
-        time.sleep(delay)
-        print(f"Playing note {degree} with a {delay} delay")
-
-    def loadQueue(self, index, delay):
-        self.qList[index].put(delay)
-
-    def loadQueues(self, indexes, delays):
-        for i in indexes:
-            self.qList[i].put(delays[i])
+    def loadQueue(self, index, mode, data):
+        self.qList[index].put([mode, data])
 
     def switchLightMode(self):
         self.lightMode = not self.lightMode
@@ -205,8 +193,9 @@ class RobotHandler:
         strumTrajectories = [upStrumTraj, downStrumTraj]
 
         while True:
-            #TODO: Add "mode" parameter to all queue items across the board
-            #TODO: Define "mode" policies and mappings
+            # TODO: Add "mode" parameter to all queue items across the board
+            #   -- Updated it for the audio portions
+            # TODO: Define "mode" policies and mappings
             mode, data = queue.get()
 
             if mode == 'live':
@@ -280,10 +269,9 @@ class RobotHandler:
         self.tracking_offset += 1
 
     def posebot(self, num, play):
-
         if play == 1:  # waving HI
             poseI = self.getAngles(num)
-            #TODO: Remove hard-coded values for robot positions
+            # TODO: Remove hard-coded values for robot positions
             poseF = [0, 0, 0, 90, 0, 0, 0]
             newPos = self.poseToPose(poseI, poseF, 5)
             self.gotoPose(num, newPos)
@@ -336,18 +324,14 @@ class RobotHandler:
             sentList.append(
                 (round(listToSend[i] * 2.5 * 256 / 360)) % 256 + (i * 20))
             self.arduino.write(str(sentList[j]).encode())
-            self.delay()
+            delay()
             j += 1
 
     def sendSyncVal(self, value):
         self.arduino.write(value.encode())
-        self.delay()
+        delay()
 
     # TODO: rename to something light specific
-
-    def delay(self):
-        time.sleep(0.013)
-
     def setRandList(self):
         randList1 = createRandList(4)
         randList2 = createRandList(6)
@@ -380,8 +364,8 @@ class RobotHandler:
         self.arms[index].set_servo_angle_j(angles=angles, is_radian=is_radian)
 
     # --------------- Controller Helpers - Needs Refactoring --------------- #
-    #TODO: Refactor this to be more readable, and less redundant
-    #TODO: Check if duplicate code can be removed
+    # TODO: Refactor this to be more readable, and less redundant
+    # TODO: Check if duplicate code can be removed
     def poseToPose(self, poseI, poseF, t):
         traj = []
         for p in range(len(poseI)):
@@ -392,7 +376,8 @@ class RobotHandler:
         track_time = time.time()
         initial_time = time.time()
         for ang in range(len(traj[0])):
-            angles = [traj[0][ang], traj[1][ang], traj[2][ang], traj[3][ang], traj[4][ang], traj[5][ang], traj[6][ang]]
+            angles = [traj[0][ang], traj[1][ang], traj[2][ang],
+                      traj[3][ang], traj[4][ang], traj[5][ang], traj[6][ang]]
             self.setAngles(num, angles, is_radian=False)
             while track_time < initial_time + 0.004:
                 track_time = time.time()
