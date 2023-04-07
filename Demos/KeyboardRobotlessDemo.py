@@ -1,5 +1,5 @@
 import time
-from Demos.IDemo import IDemo
+from Demos.Interfaces.IDemo import IDemo
 from Handlers.InputHandler import getManualInput
 # from Handlers.RobotHandler import playTestString
 

@@ -1,6 +1,6 @@
 import numpy as np
 import pyaudio
-from Demos.IMicDemo import IMicDemo
+from Demos.Interfaces.IMicDemo import IMicDemo
 
 from Helpers.NoteRandomizer import beat_randomizer, basic_randomizer
 

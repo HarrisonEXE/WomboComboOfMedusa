@@ -1,4 +1,4 @@
-from Demos.IDemo import IDemo
+from Demos.Interfaces.IDemo import IDemo
 from Handlers.RobotHandler import RobotHandler
 
 

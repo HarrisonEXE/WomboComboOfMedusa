@@ -7,8 +7,8 @@ import time
 from threading import Thread, Lock, Event
 from Classes.Phrase import Phrase
 from Classes.audioDevice import AudioDevice
-from Demos.IDemo import IDemo
-from Demos.IRobotDemo import IRobotDemo
+from Demos.Interfaces.IDemo import IDemo
+from Demos.Interfaces.IRobotDemo import IRobotDemo
 from Handlers.PerformanceHandler import PerformanceHandler
 from Handlers.RobotHandler import RobotHandler
 from Helpers.audioToMidi import AudioMidiConverter
@@ -108,7 +108,7 @@ class IMicDemo(IRobotDemo):
 
     def _process(self):
         if not self.running:
-            print("buzz kill")
+            print("Demo has been killed.")
             return
         self.waitForInput()
         phrase = self.inputToPhrase()
