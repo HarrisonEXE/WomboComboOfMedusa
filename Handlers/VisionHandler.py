@@ -3,7 +3,6 @@ from queue import Queue
 
 import cv2 as cv
 import mediapipe as mp
-import numpy as np
 
 from Handlers.DrawingHandler import DrawingHandler
 from Helpers.CvFpsCalc import CvFpsCalc

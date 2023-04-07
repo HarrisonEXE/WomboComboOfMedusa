@@ -1,9 +1,6 @@
-from Demos.Interfaces.IDemo import IDemo
 from Demos.Interfaces.IRobotDemo import IRobotDemo
 from Handlers.InputHandler import getManualInput
 from numpy.random import randint
-
-from Handlers.RobotHandler import RobotHandler
 
 
 class KeyboardRandomNoteDemo(IRobotDemo):

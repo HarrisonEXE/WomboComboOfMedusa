@@ -7,10 +7,8 @@ import time
 from threading import Thread, Lock, Event
 from Classes.Phrase import Phrase
 from Classes.audioDevice import AudioDevice
-from Demos.Interfaces.IDemo import IDemo
 from Demos.Interfaces.IRobotDemo import IRobotDemo
 from Handlers.PerformanceHandler import PerformanceHandler
-from Handlers.RobotHandler import RobotHandler
 from Helpers.audioToMidi import AudioMidiConverter
 
 

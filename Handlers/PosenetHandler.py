@@ -8,6 +8,7 @@ from Handlers.DrawingHandler import DrawingHandler
 from Helpers.CvFpsCalc import CvFpsCalc
 from Helpers.PoseGestures import detect_hand_gesture
 
+
 class PosenetHandler:
     def __init__(self, device=0, cap_width=960, cap_height=540, use_static_image_mode=True,
                  min_detection_confidence=0.7, min_tracking_confidence=0.5, communication_queue: Queue = Queue()):

@@ -1,8 +1,6 @@
-import numpy as np
-import pyaudio
 from Demos.Interfaces.IMicDemo import IMicDemo
 
-from Helpers.NoteRandomizer import beat_randomizer, basic_randomizer
+from Helpers.NoteRandomizer import beat_randomizer
 
 
 # Purely for documentation purposes

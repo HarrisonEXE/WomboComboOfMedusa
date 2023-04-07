@@ -1,21 +1,16 @@
 from Demos.Interfaces.IRobotDemo import IRobotDemo
-from Handlers.RobotHandler import RobotHandler
-from Handlers.PosenetHandler import PosenetHandler
 from Handlers.VisionHandler import VisionHandler
 from Helpers.DataFilters import buffered_smooth, save_joint_data, save_vision_data
 
-import atexit
-import numpy as np
-import queue
 import time
 from threading import Thread
 from queue import Queue
 
 
 class VisionTrackerDemo(IRobotDemo):
-    def __init__(self, robotHandler, is_lab_work=True) -> None:
+    def __init__(self, robotHandler, is_lab_work=True, robots_already_awake=False):
         self.name = "Live Vision Tracker"
-        super().__init__(robotHandler, is_lab_work)
+        super().__init__(robotHandler, is_lab_work, robots_already_awake)
 
         self.arms = self.robotHandler.arms
         self.qList = self.robotHandler.qList
@@ -35,7 +30,7 @@ class VisionTrackerDemo(IRobotDemo):
 
     def start(self):
         self.announceStart()
-        # self.readyRobots()
+        self.readyRobots()
         self.vision_thread.start()
 
     # TODO: Add a method to stop the server.

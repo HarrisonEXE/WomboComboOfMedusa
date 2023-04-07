@@ -1,5 +1,4 @@
 from Demos.Interfaces.IDemo import IDemo
-from Handlers.RobotHandler import RobotHandler
 
 
 class IRobotDemo(IDemo):

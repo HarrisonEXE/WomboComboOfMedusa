@@ -1,7 +1,6 @@
 import time
 from Demos.Interfaces.IDemo import IDemo
 from Handlers.InputHandler import getManualInput
-# from Handlers.RobotHandler import playTestString
 
 
 class KeyboardRobotlessDemo(IDemo):

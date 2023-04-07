@@ -3,7 +3,6 @@ import time
 from Demos.Haltable.HaltableMicDemo import HaltableMicDemo
 from Demos.Haltable.HaltableVoiceDemo import HaltableVoiceDemo
 from Demos.VisionTrackerDemo import VisionTrackerDemo
-from Handlers.RobotHandler import RobotHandler
 
 
 class Performance:
@@ -11,9 +10,8 @@ class Performance:
         self.robotHandler = robotHandler
 
         self.voiceDemo = HaltableVoiceDemo(robotHandler, is_lab_work)
-        self.micDemo = HaltableMicDemo(
-            robotHandler, is_lab_work, robots_already_awake=True)
-        self.visionTrackerDemo = VisionTrackerDemo(robotHandler, is_lab_work)
+        self.micDemo = HaltableMicDemo(robotHandler, is_lab_work, robots_already_awake=True)
+        self.visionTrackerDemo = VisionTrackerDemo(robotHandler, is_lab_work, robots_already_awake=True)
 
         self.mainThread = Thread()
 

@@ -1,4 +1,3 @@
-from threading import Thread
 from Demos.Interfaces.IMicDemo import IMicDemo
 
 

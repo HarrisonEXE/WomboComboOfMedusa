@@ -54,3 +54,5 @@ if __name__ == '__main__':
     robotHandler = RobotHandler(is_lab_work=True)
     performance = Performance(robotHandler, is_lab_work=True)
     performance.runSequence()
+
+
