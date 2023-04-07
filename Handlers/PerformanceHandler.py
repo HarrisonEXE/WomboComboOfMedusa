@@ -26,9 +26,9 @@ class PerformanceHandler:
 
             self.lock.acquire()  # TODO: Check to see if actually neccesary
             if self.is_lab_work:
-                self.robotHandler.playStringTemp(corrected_pitch)
+                self.robotHandler.playString(corrected_pitch)
             else:
-                self.robotHandler.playTestStringTemp(corrected_pitch)
+                self.robotHandler.playTestString(corrected_pitch)
             self.lock.release()
 
             prev_note_start = note.start

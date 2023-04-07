@@ -15,8 +15,8 @@ from Helpers.audioToMidi import AudioMidiConverter
 
 
 class IMicDemo(IRobotDemo):
-    def __init__(self, robotHandler, is_lab_work=True, sr=48000, frame_size=2400, activation_threshold=0.02, n_wait=16):
-        super().__init__(robotHandler, is_lab_work)
+    def __init__(self, robotHandler, is_lab_work=True, sr=48000, frame_size=2400, activation_threshold=0.02, n_wait=16, robots_already_awake=False):
+        super().__init__(robotHandler, is_lab_work, robots_already_awake)
         self.name = "Mic Demo Interface"
 
         self.is_lab_work = is_lab_work
@@ -57,8 +57,12 @@ class IMicDemo(IRobotDemo):
         self.announceStart()
         if self.process_thread.is_alive():
             self.process_thread.join()
+        self.runDemoThread()
+
+    def runDemoThread(self):
         self.lock.acquire()
         self.active = True
+        self.running = True
         self.lock.release()
         self.process_thread = Thread(target=self._process)
         self.process_thread.start()
@@ -71,7 +75,7 @@ class IMicDemo(IRobotDemo):
         self.last_time = time.time()
 
     def waitForInput(self):
-        while True:
+        while True and self.running:
             time.sleep(0.1)
             self.lock.acquire()
             if not self.active:
@@ -103,6 +107,9 @@ class IMicDemo(IRobotDemo):
         return phrase
 
     def _process(self):
+        if not self.running:
+            print("buzz kill")
+            return
         self.waitForInput()
         phrase = self.inputToPhrase()
         if phrase:

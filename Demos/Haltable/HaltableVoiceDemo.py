@@ -2,15 +2,17 @@ import speech_recognition as sr
 from Demos.IRobotDemo import IRobotDemo
 
 
-class VoiceDemo(IRobotDemo):
+class HaltableVoiceDemo(IRobotDemo):
     def __init__(self, robotHandler, is_lab_work=True):
         super().__init__(robotHandler, is_lab_work)
-        self.name = "Voice Recognition Demo"
+        self.name = "Haltable Voice Recognition Demo"
 
     def start(self):
-        self.readyRobotsWithoutLive()
+        self.announceStart()
+        self.running = True
+        self.readyRobots()
         r = sr.Recognizer()
-        self.listen(r)
+        return self.listen(r)
 
     def listen(self, r):
         with sr.Microphone() as source:
@@ -47,15 +49,10 @@ class VoiceDemo(IRobotDemo):
                 print(f"Detected phrase: {text}")
                 if "hey medusa" in text:
                     print("You have angered Medusa")
-                    self.robotHandler.turnOffLive()
-                    self.robotHandler.scare()
-                elif "calm down" in text:
-                    print("Aight, Medusa is chill now")
                     self.robotHandler.turnOnLive()
-                elif "toggle lights" in text:
-                    print("lights are toggled")
-                    # switchLightMode()
-                    self.robotHandler.switchLightMode()
-                    self.robotHandler.lightQ.put(3)
-                else:
-                    print("sucks")
+                    return True
+
+                elif "goodbye medusa" in text:
+                    print("Medusa is going to sleep")
+                    self.robotHandler.turnOnLive()
+                    return True
