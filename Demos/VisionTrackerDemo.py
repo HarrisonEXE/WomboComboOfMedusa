@@ -31,50 +31,54 @@ class VisionTrackerDemo(IRobotDemo):
     def start(self):
         self.announceStart()
         self.readyRobots()
+        self.listener_thread.start()
         self.vision_thread.start()
 
     # TODO: Add a method to stop the server.
     # TODO: Add different poses/tracking for different arms.
 
     def _listener(self):
+        print("Listening queue started")
         while True:
-            address, args = self.communication_queue.get()
+            address, gesture = self.communication_queue.get()
 
             if address == "/gesture":
                 mode = "pose"
-                print(args[0])
-                if args[0] == "stop":
+                print(gesture)
+                if gesture == "stop":
                     self.qList[0].put([mode, 1])
                     self.qList[1].put([mode, 1])
                     self.qList[2].put([mode, 1])
                     self.qList[3].put([mode, 1])
                     self.qList[4].put([mode, 1])
-                elif args[0] == "go":
+                elif gesture == "go":
                     self.qList[0].put([mode, 2])
                     self.qList[1].put([mode, 2])
                     self.qList[2].put([mode, 2])
                     self.qList[3].put([mode, 2])
                     self.qList[4].put([mode, 2])
-                elif args[0] == "swipe_left":
+                elif gesture == "swipe_left":
                     self.qList[0].put([mode, 3])
                     self.qList[1].put([mode, 3])
                     self.qList[2].put([mode, 3])
                     self.qList[3].put([mode, 3])
                     self.qList[4].put([mode, 3])
-                elif args[0] == "swipe_right":
+                elif gesture == "swipe_right":
                     self.qList[0].put([mode, 4])
                     self.qList[1].put([mode, 4])
                     self.qList[2].put([mode, 4])
                     self.qList[3].put([mode, 4])
                     self.qList[4].put([mode, 4])
-                elif args[0] == "twirl":
+                elif gesture == "twirl":
                     self.qList[0].put([mode, 5])
                     self.qList[1].put([mode, 5])
                     self.qList[2].put([mode, 5])
                     self.qList[3].put([mode, 5])
                     self.qList[4].put([mode, 5])
 
+            # TODO: replace args[0], args[1] .... from communication queue
             elif address == "/head":
+                raise NotImplementedError
                 head = {'x': args[0], 'y': args[1], 'z': args[2]}
                 shoulder = {'x': args[3], 'y': args[4], 'z': args[5]}
 
