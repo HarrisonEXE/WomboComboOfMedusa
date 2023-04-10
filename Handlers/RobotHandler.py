@@ -269,20 +269,34 @@ class RobotHandler:
         self.tracking_offset += 1
 
     def posebot(self, num, play):
-        if play == 1:  # waving HI
+        if play == 1:  # stop
             poseI = self.getAngles(num)
             # TODO: Remove hard-coded values for robot positions
             poseF = [0, 0, 0, 90, 0, 0, 0]
-            newPos = self.poseToPose(poseI, poseF, 5)
+            newPos = self.poseToPose(poseI, poseF, 4)
             self.gotoPose(num, newPos)
 
-        if play == 2:  # waving BYE
+        if play == 2:  # go
             poseI = self.getAngles(num)
             poseF = self.IP[num]
-            newPos = self.poseToPose(poseI, poseF, 5)
+            newPos = self.poseToPose(poseI, poseF, 4)
             self.gotoPose(num, newPos)
 
-        if play == 3:  # twirl
+        if play == 3:  # swipe_left
+            poseI = self.getAngles(num)
+            poseF = self.IPus[num]
+            newPos = self.poseToPose(poseI, poseF, 4)
+            self.gotoPose(num, newPos)
+            self.robomove(num, positions.circletraj[num])
+
+        if play == 4:  # swipe_left
+            poseI = self.getAngles(num)
+            poseF = self.IPus[num]
+            newPos = self.poseToPose(poseI, poseF, 4)
+            self.gotoPose(num, newPos)
+            self.robomove(num, positions.wtraj[num])
+
+        if play == 5:  # twirl
             poseI = self.getAngles(num)
             poseF = self.IPus[num]
             newPos = self.poseToPose(poseI, poseF, 4)

@@ -43,12 +43,36 @@ class VisionTrackerDemo(IRobotDemo):
             if address == "/gesture":
                 mode = "pose"
                 print(args[0])
-                if args[0] == "wave_hello":
+                if args[0] == "stop":
                     self.qList[0].put([mode, 1])
-                elif args[0] == "wave_bye":
+                    self.qList[1].put([mode, 1])
+                    self.qList[2].put([mode, 1])
+                    self.qList[3].put([mode, 1])
+                    self.qList[4].put([mode, 1])
+                elif args[0] == "go":
                     self.qList[0].put([mode, 2])
-                elif args[0] == "twirl":
+                    self.qList[1].put([mode, 2])
+                    self.qList[2].put([mode, 2])
+                    self.qList[3].put([mode, 2])
+                    self.qList[4].put([mode, 2])
+                elif args[0] == "swipe_left":
                     self.qList[0].put([mode, 3])
+                    self.qList[1].put([mode, 3])
+                    self.qList[2].put([mode, 3])
+                    self.qList[3].put([mode, 3])
+                    self.qList[4].put([mode, 3])
+                elif args[0] == "swipe_right":
+                    self.qList[0].put([mode, 4])
+                    self.qList[1].put([mode, 4])
+                    self.qList[2].put([mode, 4])
+                    self.qList[3].put([mode, 4])
+                    self.qList[4].put([mode, 4])
+                elif args[0] == "twirl":
+                    self.qList[0].put([mode, 5])
+                    self.qList[1].put([mode, 5])
+                    self.qList[2].put([mode, 5])
+                    self.qList[3].put([mode, 5])
+                    self.qList[4].put([mode, 5])
 
             elif address == "/head":
                 head = {'x': args[0], 'y': args[1], 'z': args[2]}
