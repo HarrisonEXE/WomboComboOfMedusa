@@ -13,16 +13,13 @@ from Helpers.DataFilters import save_joint_data
 class RobotHandler:
     def __init__(self, is_lab_work=True):
         self.is_lab_work = is_lab_work
-        self.lightMode = True
+        self.lightMode = False
         self.arms = []
         self.strumD = 30
         self.speed = 0.25
-        self.basesamp = 40
-        self.usamp = 30
         # self.arduino = serial.Serial('/dev/ttyACM0', 9600) # for Linux
         # self.arduino = serial.Serial('com4', 9600)    # for PC
         self.IP = self.setIPs()
-        self.IPus = self.setIPus()
         self.randLists = self.setRandList()
 
         self.qList = self.setQList()
@@ -69,19 +66,6 @@ class RobotHandler:
         IP4 = [-1.8, 81.8, 0, 120, -self.strumD / 2, 50.65, -45]
         return [IP0, IP1, IP2, IP3, IP4]
 
-    def setIPus(self):
-        IP0us = [-0.25 - self.basesamp / 2, 87.5 -
-                 self.usamp, -2, 126.5, 0, 51.7, -45]
-        IP1us = [2.67 - self.basesamp / 2, 86.32 -
-                 self.usamp, 0, 127.1, 0, 50.1, -45]
-        IP2us = [1.3 - self.basesamp / 2, 81.8 -
-                 self.usamp, 0, 120, 0, 54.2, -45]
-        IP3us = [-1.4 - self.basesamp / 2, 83.95 -
-                 self.usamp, 0, 120, 0, 50.75, -45]
-        IP4us = [-1.8 - self.basesamp / 2, 81.88 -
-                 self.usamp, 0, 120, 0, 50.75, -45]
-        return [IP0us, IP1us, IP2us, IP3us, IP4us]
-
     def setupRobots(self):
         self.buildArmsList()
         self.connectToArms()
@@ -112,7 +96,7 @@ class RobotHandler:
         for thread in self.strumArmThreads:
             thread.start()
         # self.xArmDrumThread.start()
-        # self.lightThread.start()
+        self.lightThread.start()
         print("Robot threads started")
 
     def moveToStart(self, index):
@@ -284,21 +268,21 @@ class RobotHandler:
 
         if play == 3:  # swipe_left
             poseI = self.getAngles(num)
-            poseF = self.IPus[num]
+            poseF = positions.IPc[num]
             newPos = self.poseToPose(poseI, poseF, 4)
             self.gotoPose(num, newPos)
             self.robomove(num, positions.circletraj[num])
 
         if play == 4:  # swipe_left
             poseI = self.getAngles(num)
-            poseF = self.IPus[num]
+            poseF = positions.IPw[num]
             newPos = self.poseToPose(poseI, poseF, 4)
             self.gotoPose(num, newPos)
             self.robomove(num, positions.wtraj[num])
 
         if play == 5:  # twirl
             poseI = self.getAngles(num)
-            poseF = self.IPus[num]
+            poseF = positions.IPus[num]
             newPos = self.poseToPose(poseI, poseF, 4)
             self.gotoPose(num, newPos)
             self.robomove(num, positions.spintraj[num])
@@ -352,8 +336,7 @@ class RobotHandler:
         randList3 = createRandList(6)
         randList4 = createRandList(6)
         randList5 = createRandList(4)
-        self.randLists = [randList1, randList2,
-                          randList3, randList4, randList5]
+        return [randList1, randList2, randList3, randList4, randList5]
 
     def scare(self):
         self.arms[0].set_servo_angle(angle=[-.1, -15, 71.6, 83.8, -7.3, 0.8, 4.6], wait=False, speed=40,

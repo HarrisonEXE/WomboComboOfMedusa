@@ -30,10 +30,12 @@ class Performance:
         self.micDemo.start()
         mainThread = Thread(target=self.micDemo.runDemoThread)
         mainThread.start()
-        # TODO: Kill based on r2pmidi
+        # TODO: Kill based on r2pmidi, maybe improvise
         time.sleep(30)
         self.micDemo.kill()
         mainThread.join()
+
+        # TODO: Audio blends into presequence
 
         # 0:31 - 3:30 ------------ 2 -
         # Xylophone Mimicking (Audio)
