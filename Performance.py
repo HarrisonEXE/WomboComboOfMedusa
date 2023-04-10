@@ -23,7 +23,6 @@ class Performance:
         mainThread.start()
         mainThread.join()
 
-        # TODO: Setup Xylophone mic (seperate from voice commands)
 
         # 0:01 - 0:30 ------------ 2 -
         # Xylophone Mimicking (Audio)
@@ -41,6 +40,7 @@ class Performance:
         # ----------------------------
         mainThread = Thread(target=self.visionTrackerDemo.start)
         mainThread.start()
+        # TODO: Figure out transition to end
 
         # END--------------------- 2 -
         # Xylophone Mimicking (Audio)

@@ -15,6 +15,7 @@ class VoiceDemo(IRobotDemo):
 
     def listen(self, r):
         ###### change this variable to match needed mic ######
+        # print(sr.Microphone.list_microphone_names())
         micIndex = sr.Microphone.list_microphone_names().index(self.micName)
 
         mic = sr.Microphone(micIndex) # set mic
