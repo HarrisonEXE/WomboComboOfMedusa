@@ -16,7 +16,7 @@ class VisionTrackerDemo(IRobotDemo):
         self.qList = self.robotHandler.qList
 
         self.communication_queue = Queue()
-        # self.vision = PosenetHandler(device=0, communication_queue=self.communication_queue)
+        # self.vision = VisionHandler(device=0, communication_queue=self.communication_queue)
         self.vision = VisionHandler(device=6, communication_queue=self.communication_queue)
         self.vision_thread = Thread(target=self.vision.start)
         self.listener_thread = Thread(target=self._listener)
