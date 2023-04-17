@@ -4,6 +4,7 @@ from queue import Queue
 import cv2 as cv
 import mediapipe as mp
 
+from Helpers.DataFilters import buffered_smooth
 from Handlers.DrawingHandler import DrawingHandler
 from Helpers.CvFpsCalc import CvFpsCalc
 from Helpers.HandGestures import *
@@ -55,6 +56,14 @@ class VisionHandler:
         # gesture variables
         self.prev_gesture = ""
         self.curr_gesture = ""
+
+        # Noise filter variables
+        self.head_x = []
+        self.head_y = []
+        self.head_z = []
+        self.shoulder_x = []
+        self.shoulder_y = []
+        self.shoulder_z = []
 
     def detect_twirl(self, landmarks, handedness):
         if detectBasic(landmarks, handedness):
@@ -150,6 +159,7 @@ class VisionHandler:
                 if self.curr_gesture is not None and self.curr_gesture != "":
                     self.communication_queue.put(("/gesture", self.curr_gesture))
                     # print(self.curr_gesture)
+                    self.prev_gesture = self.curr_gesture
                     self.curr_gesture = None
 
                 cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
@@ -165,6 +175,7 @@ class VisionHandler:
 
                 if self.curr_gesture is not None and self.curr_gesture != "":
                     self.communication_queue.put(("/gesture", self.curr_gesture))
+                    self.prev_gesture = self.curr_gesture
                     self.curr_gesture = None
 
                 cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
@@ -180,9 +191,21 @@ class VisionHandler:
                     self.holistic.PoseLandmark.LEFT_SHOULDER.value].y) / 2
                 shoulder_z = (landmarks[self.holistic.PoseLandmark.RIGHT_SHOULDER.value].z + landmarks[
                     self.holistic.PoseLandmark.LEFT_SHOULDER.value].z) / 2
-                # TODO: This will never be true since we don't have wave_hello anymore!!!
-                if self.curr_gesture == 'wave':
-                    self.communication_queue.put(("/live", (head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z)))
+
+                if self.prev_gesture == 'twirl':
+                    head = {'x': head_x, 'y': head_y, 'z': head_z}
+                    shoulder = {'x': shoulder_x, 'y': shoulder_y, 'z': shoulder_z}
+
+                    smoothed_head = buffered_smooth(self.head_x, self.head_y, self.head_z, head)
+                    smoothed_shoulder = buffered_smooth(self.shoulder_x, self.shoulder_y, self.shoulder_z, shoulder)
+
+                    self.communication_queue.put(("/live", [*smoothed_head, *smoothed_shoulder]))
+
+                # TODO: add a switch key function
+                # if cv.waitKey(1) & 0xFF == ord('m'):
+                #     print("received twirl sending switch message")
+                #     self.communication_queue.put(("/live", [*smoothed_head, *smoothed_shoulder]))
+
 
             cv.putText(image, str(int(fps)) + " FPS", (10, 70), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
             cv.imshow('Gesture Recognition', image)
