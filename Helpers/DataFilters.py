@@ -5,15 +5,15 @@ BUFFER_SIZE = 5
 
 
 def buffered_smooth(buffer_x, buffer_y, buffer_z, coordinates):
-    buffer_x.append(coordinates['x'])
-    buffer_y.append(coordinates['y'])
-    buffer_z.append(coordinates['z'])
+    buffer_x.append(float(coordinates['x']))
+    buffer_y.append(float(coordinates['y']))
+    buffer_z.append(float(coordinates['z']))
 
     if len(buffer_x) >= BUFFER_SIZE:
         x = exponential_moving_average(buffer_x, 0.5)
         y = exponential_moving_average(buffer_y, 0.5)
         z = exponential_moving_average(buffer_z, 0.5)
-        return x, y, z
+        return float(x), float(y), float(z)
     else:
         return None
 
