@@ -48,11 +48,11 @@ if __name__ == '__main__':
     # visionProcess.start()
     # audioProcess.start()
 
-    # visionHandler = VisionHandler()
-    # visionHandler.start()
-    # MedusaDemo(RobotHandler()).run()
-    robotHandler = RobotHandler(is_lab_work=True)
-    performance = Performance(robotHandler, is_lab_work=True)
-    performance.runSequence()
+    #visionHandler = VisionHandler()
+    #visionHandler.start()
+    MedusaDemo(RobotHandler()).run()
+    #robotHandler = RobotHandler(is_lab_work=True)
+    #performance = Performance(robotHandler, is_lab_work=True)
+    #performance.runSequence()
 
 

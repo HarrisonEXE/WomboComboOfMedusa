@@ -19,7 +19,7 @@ hold_t = [2,2,2,2,2,2,2]
 gesture_info = []
 
 def get_gesture_info():
-    with open("vision_response.csv") as csv_db:
+    with open('/home/codmusic/Downloads/MedusaAV/WomboComboOfMedusa/Helpers/vision_response.csv') as csv_db:
         csv_reader = csv.DictReader(csv_db, delimiter=',')
         for dict in csv_reader:
             temp_dict = {}

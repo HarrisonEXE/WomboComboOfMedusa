@@ -273,8 +273,12 @@ class RobotHandler:
             #newPos = self.poseToPose(poseI, poseF, 4)
             newPos = self.poseToPose(poseI, [0,0,0,90,0,0,0],8)
             swipe_left_response = VisionResponse.make_traj(3)
+            # print(len(swipe_left_response))
+            # # for item in swipe_left_response:
+            # #     print(item[0])
+            # print(swipe_left_response[0][0:20])
             self.gotoPose(num, newPos)
-            self.robomove(num, swipe_left_response)
+            #self.robomove(num, swipe_left_response)
 
         if play == 4:  # swipe_left
             poseI = self.getAngles(num)
@@ -283,7 +287,7 @@ class RobotHandler:
             newPos = self.poseToPose(poseI, [0,0,0,90,0,0,0], 8)
             swipe_right_response = VisionResponse.make_traj(4)
             self.gotoPose(num, newPos)
-            self.robomove(num, swipe_right_response)
+            #self.robomove(num, swipe_right_response)
 
         if play == 5:  # twirl
             poseI = self.getAngles(num)

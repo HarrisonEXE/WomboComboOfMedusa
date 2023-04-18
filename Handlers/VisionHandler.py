@@ -69,6 +69,9 @@ class VisionHandler:
         self.shoulder_y = []
         self.shoulder_z = []
 
+        # Stop queue after detection
+        self.last_queue = None
+
     def detect_twirl(self, landmarks, handedness):
         if detectBasic(landmarks, handedness):
             self.curr_time_twirl = datetime.now()
@@ -156,15 +159,17 @@ class VisionHandler:
                 image_rows, image_cols, _ = image.shape
 
                 # detect gestures
-                self.detect_twirl(landmarks, "R")
-                self.detect_stop_go(landmarks, "R")
-                self.detect_swipe(landmarks, "R")
+                if (self.last_queue is None or datetime.now() > self.last_queue + timedelta(seconds = 2)):
+                    self.detect_twirl(landmarks, "R")
+                    self.detect_stop_go(landmarks, "R")
+                    self.detect_swipe(landmarks, "R")
 
                 if self.curr_gesture is not None and self.curr_gesture != "":
                     self.communication_queue.put(("/gesture", self.curr_gesture))
-                    # print(self.curr_gesture)
+                    print(self.curr_gesture)
                     self.prev_gesture = self.curr_gesture
                     self.curr_gesture = None
+                    self.last_queue = datetime.now()
 
                 cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
 
@@ -173,14 +178,17 @@ class VisionHandler:
                 landmarks = results.left_hand_landmarks
                 image_rows, image_cols, _ = image.shape
                 # detect gestures
-                self.detect_twirl(landmarks, "L")
-                self.detect_stop_go(landmarks, "L")
-                self.detect_swipe(landmarks, "L")
+                if (self.last_queue is None or datetime.now() > self.last_queue + timedelta(seconds=2)):
+                    self.detect_twirl(landmarks, "L")
+                    self.detect_stop_go(landmarks, "L")
+                    self.detect_swipe(landmarks, "L")
 
                 if self.curr_gesture is not None and self.curr_gesture != "":
                     self.communication_queue.put(("/gesture", self.curr_gesture))
+                    print(self.curr_gesture)
                     self.prev_gesture = self.curr_gesture
                     self.curr_gesture = None
+                    self.last_queue = datetime.now()
 
                 cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
 
