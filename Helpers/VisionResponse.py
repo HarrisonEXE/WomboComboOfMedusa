@@ -19,7 +19,7 @@ hold_t = [2,2,2,2,2,2,2]
 gesture_info = []
 
 def get_gesture_info():
-    with open('/home/codmusic/Downloads/MedusaAV/WomboComboOfMedusa/Helpers/vision_response.csv') as csv_db:
+    with open('c:/Users/kayla/OneDrive/Desktop/Georgia_Tech/VIP/WomboComboOfMedusa/Helpers/vision_response.csv') as csv_db:
         csv_reader = csv.DictReader(csv_db, delimiter=',')
         for dict in csv_reader:
             temp_dict = {}
@@ -61,7 +61,7 @@ def get_gesture_info():
             
 def fifth_poly(q_i, q_f, t):
     # time/0.005
-    traj_t = np.arange(0, t, 0.005)
+    traj_t = np.arange(0, t, 0.004)
     #print("shape is " + str(np.shape(traj_t)) + " time is " + str(t) + "qi is " + str(q_i))
     dq_i = 0
     dq_f = 0
@@ -125,7 +125,17 @@ def make_traj(gesture_num):
                 traj_pos_total = np.concatenate((traj_pos_total, traj_pos), axis=None)
 
         step_values.append(traj_pos_total)
-            
+
+
+    #normalize the length of the step_values ndarrays and convert to lists
+    #step_values[i] is an ndarray
+    total_length = min(np.shape(step_values[0])[0], np.shape(step_values[1])[0], np.shape(step_values[2])[0],
+                        np.shape(step_values[3])[0], np.shape(step_values[4])[0], np.shape(step_values[5])[0], np.shape(step_values[6])[0])
+
+    for i in range(7):
+        step_values[i] = step_values[i][:total_length]
+        step_values[i] = step_values[i].tolist()
+
     return step_values
 
 
