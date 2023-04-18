@@ -126,6 +126,7 @@ def make_traj(gesture_num):
 
         step_values.append(traj_pos_total)
 
+
     #normalize the length of the step_values ndarrays and convert to lists
     #step_values[i] is an ndarray
     total_length = min(np.shape(step_values[0])[0], np.shape(step_values[1])[0], np.shape(step_values[2])[0],
