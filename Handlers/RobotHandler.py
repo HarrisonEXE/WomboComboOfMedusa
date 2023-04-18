@@ -8,6 +8,7 @@ from Helpers import positions
 from Helpers.Utils import createRandList, delay
 from Helpers.TrajectoryGeneration import fifth_poly, spline_poly
 from Helpers.DataFilters import save_joint_data
+from Helpers import VisionResponse
 
 
 class RobotHandler:
@@ -269,16 +270,20 @@ class RobotHandler:
         if play == 3:  # swipe_left
             poseI = self.getAngles(num)
             poseF = positions.IPc[num]
-            newPos = self.poseToPose(poseI, poseF, 4)
+            #newPos = self.poseToPose(poseI, poseF, 4)
+            newPos = self.poseToPose(poseI, [0,0,0,90,0,0,0],8)
+            swipe_left_response = VisionResponse.make_traj(3)
             self.gotoPose(num, newPos)
-            self.robomove(num, positions.circletraj[num])
+            self.robomove(num, swipe_left_response)
 
         if play == 4:  # swipe_left
             poseI = self.getAngles(num)
             poseF = positions.IPw[num]
-            newPos = self.poseToPose(poseI, poseF, 4)
+            #newPos = self.poseToPose(poseI, poseF, 4)
+            newPos = self.poseToPose(poseI, [0,0,0,90,0,0,0], 8)
+            swipe_right_response = VisionResponse.make_traj(4)
             self.gotoPose(num, newPos)
-            self.robomove(num, positions.wtraj[num])
+            self.robomove(num, swipe_right_response)
 
         if play == 5:  # twirl
             poseI = self.getAngles(num)

@@ -8,6 +8,7 @@ from Helpers.DataFilters import buffered_smooth
 from Handlers.DrawingHandler import DrawingHandler
 from Helpers.CvFpsCalc import CvFpsCalc
 from Helpers.HandGestures import *
+from Helpers import VisionResponse
 
 
 class VisionHandler:
@@ -37,6 +38,9 @@ class VisionHandler:
         cv.destroyAllWindows()
 
     def initialize_gesture_detection_state(self):
+        #init gesture response list
+        VisionResponse.init()
+
         # twirl variables
         self.count_twirl = 0
         self.curr_time_twirl = None
