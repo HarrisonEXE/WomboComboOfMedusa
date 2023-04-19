@@ -19,7 +19,7 @@ hold_t = [2,2,2,2,2,2,2]
 gesture_info = []
 
 def get_gesture_info():
-    with open('c:/Users/kayla/OneDrive/Desktop/Georgia_Tech/VIP/WomboComboOfMedusa/Helpers/vision_response.csv') as csv_db:
+    with open('/home/codmusic/Downloads/MedusaAV/WomboComboOfMedusa/Helpers/vision_response.csv') as csv_db:
         csv_reader = csv.DictReader(csv_db, delimiter=',')
         for dict in csv_reader:
             temp_dict = {}
@@ -130,7 +130,8 @@ def make_traj(gesture_num):
     #normalize the length of the step_values ndarrays and convert to lists
     #step_values[i] is an ndarray
     total_length = min(np.shape(step_values[0])[0], np.shape(step_values[1])[0], np.shape(step_values[2])[0],
-                        np.shape(step_values[3])[0], np.shape(step_values[4])[0], np.shape(step_values[5])[0], np.shape(step_values[6])[0])
+                       np.shape(step_values[3])[0], np.shape(step_values[4])[0], np.shape(step_values[5])[0],
+                       np.shape(step_values[6])[0])
 
     for i in range(7):
         step_values[i] = step_values[i][:total_length]

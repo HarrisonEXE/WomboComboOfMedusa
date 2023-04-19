@@ -278,7 +278,7 @@ class RobotHandler:
             # #     print(item[0])
             # print(swipe_left_response[0][0:20])
             self.gotoPose(num, newPos)
-            #self.robomove(num, swipe_left_response)
+            self.k_robomove(num, swipe_left_response)
 
         if play == 4:  # swipe_left
             poseI = self.getAngles(num)
@@ -287,7 +287,7 @@ class RobotHandler:
             newPos = self.poseToPose(poseI, [0,0,0,90,0,0,0], 8)
             swipe_right_response = VisionResponse.make_traj(4)
             self.gotoPose(num, newPos)
-            #self.robomove(num, swipe_right_response)
+            self.k_robomove(num, swipe_right_response)
 
         if play == 5:  # twirl
             poseI = self.getAngles(num)
@@ -395,6 +395,19 @@ class RobotHandler:
         initial_time = time.time()
         for j_angles in trajectory:
             self.setAngles(num, j_angles, is_radian=False)
+            while track_time < initial_time + 0.004:
+                track_time = time.time()
+                time.sleep(0.0001)
+            initial_time += 0.004
+
+    def k_robomove(self, num, trajectory):
+        track_time = time.time()
+        initial_time = time.time()
+        for i in range(len(trajectory[0])):
+            angles = [trajectory[0][i], trajectory[1][i], trajectory[2][i],
+                      trajectory[3][i], trajectory[4][i], trajectory[5][i],
+                      trajectory[6][i]]
+            self.setAngles(num, angles, is_radian=False)
             while track_time < initial_time + 0.004:
                 track_time = time.time()
                 time.sleep(0.0001)
