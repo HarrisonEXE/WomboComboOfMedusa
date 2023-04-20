@@ -30,6 +30,9 @@ class RobotHandler:
             target=self.drummer, args=(5,))
         self.xArmDrumThread2 = Thread(
             target=self.drummer, args=(6,))
+
+        self.xArmDrummers = Thread(target=self.drummer2, args=([5, 6],))
+
         self.drumvel = 3
         self.drumtrajs = self.setDrummingTraj()
 
@@ -61,6 +64,7 @@ class RobotHandler:
             target=self.strumController, args=(self.qList[3], 3,))  # num 3
         xArm4Thread = Thread(
             target=self.strumController, args=(self.qList[4], 4,))  # num 5
+
         #drumming arms
         #parameters self,queue,num,velocity
         xArm5Thread = Thread(
@@ -112,10 +116,10 @@ class RobotHandler:
         print(f"{len(self.arms)} arms connected.")
 
     def startThreads(self):
-        # for thread in self.strumArmThreads:
-        #     thread.start()
+        for thread in self.strumArmThreads:
+            thread.start()
+        self.xArmDrummers.start()
         # self.xArmDrumThread1.start()
-        # time.sleep(1.5)
         # self.xArmDrumThread2.start()
         # self.lightThread.start()
         print("Robot threads started")
@@ -266,23 +270,45 @@ class RobotHandler:
             '14': [traj2_14, traj4_14, traj6_14]
         }
 
-    def drummer(self, num):
-        t = time.time()
+    # def drummer(self, num):
+    #     t = time.time()
+    #     while True:
+    #         if num == 5:
+    #             traj2 = self.drumtrajs[str(self.drumvel)][0]
+    #             traj4 = self.drumtrajs[str(self.drumvel)][1]
+    #             traj6 = self.drumtrajs[str(self.drumvel)][2]
+    #
+    #         if num == 6:
+    #             traj2 = self.drumtrajs[str(self.drumvel+10)][0]
+    #             traj4 = self.drumtrajs[str(self.drumvel+10)][1]
+    #             traj6 = self.drumtrajs[str(self.drumvel+10)][2]
+    #
+    #         if time.time() - t >= 3 and num == 6:
+    #             self.drumbot(traj2, traj4, traj6, num)
+    #             print("drum vel ", self.drumvel)
+    #             t = time.time()
+
+    def drummer2(self, arms):
+        t1 = time.time()
+        t2 = time.time()
         while True:
-            if(num == 5):
+            if arms[0] == 5:
                 traj2 = self.drumtrajs[str(self.drumvel)][0]
                 traj4 = self.drumtrajs[str(self.drumvel)][1]
                 traj6 = self.drumtrajs[str(self.drumvel)][2]
-            if (num == 6):
+                if time.time() - t1 >= 2:
+                    self.drumbot(traj2, traj4, traj6, arms[0])
+                    print("drum vel ", self.drumvel)
+                    t1 = time.time()
+
+            if arms[1] == 6:
                 traj2 = self.drumtrajs[str(self.drumvel+10)][0]
                 traj4 = self.drumtrajs[str(self.drumvel+10)][1]
                 traj6 = self.drumtrajs[str(self.drumvel+10)][2]
-
-            print(self.drumvel)
-            if time.time() - t >= 2:
-                self.drumbot(traj2, traj4, traj6, num)
-                print("drum vel ", self.drumvel)
-                t = time.time()
+                if time.time() - t2 >= 2:
+                    self.drumbot(traj2, traj4, traj6, arms[1])
+                    print("drum vel ", self.drumvel)
+                    t2 = time.time()
 
     def drumController(self, queue, num):
         #formerly known as drummer funciton
@@ -373,6 +399,7 @@ class RobotHandler:
             initial_time += 0.004
 
     def drumbot(self, traj2, traj4, traj6, arm):
+        a = time.time()
         # def drumbot(traj1, traj2, traj3, traj4, traj5, traj6, traj7, arm):
 
         # j_angles = pos
@@ -387,13 +414,15 @@ class RobotHandler:
 
             jointangles = [0, traj2[i], 0, traj4[i], 0, traj6[i], 0]
             # jointangles = [traj1[i], traj2[i], traj3[i], traj4[i], traj5[i], traj6[i], traj7[i]]
-
-            print(traj6[i])
+            # print(traj6[i])
             self.arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
+
             while track_time < initial_time + 0.004:
                 track_time = time.time()
                 time.sleep(0.0001)
             initial_time += 0.004
+
+        print("arm: ", arm, "traj time: ", time.time() - a)
 
     # Picks and sends indexes, defined by anglesToSend, of a 6 item list, defined by listToSend
     def listSend(self, listToSend, anglesToSend):
