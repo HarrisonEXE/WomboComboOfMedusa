@@ -63,6 +63,17 @@ class VisionHandler:
         self.curr_gesture = ""
         self.if_tracking = False
 
+        # Noise filter variables
+        self.head_x = []
+        self.head_y = []
+        self.head_z = []
+        self.shoulder_x = []
+        self.shoulder_y = []
+        self.shoulder_z = []
+
+        # Queue timeout variable
+        self.last_queued = None
+
     def detect_twirl(self, landmarks, handedness):
         if detectBasic(landmarks, handedness):
             self.curr_time_twirl = datetime.now()
@@ -77,7 +88,6 @@ class VisionHandler:
             self.curr_gesture = "twirl"
             self.curr_time_twirl = None
             self.count_twirl = 0
-            self.vol_start = not(self.vol_start)
 
     def detect_stop_go(self, landmarks, handedness):
         if detectClosed(landmarks, handedness):
@@ -175,13 +185,15 @@ class VisionHandler:
                 image_rows, image_cols, _ = image.shape
 
                 # detect gestures
-                self.detect_twirl(landmarks, "R")
-                self.detect_stop_go(landmarks, "R")
-                self.detect_swipe(landmarks, "R")
+                if (self.last_queued is None or datetime.now() > self.last_queued + timedelta(seconds = 2)):
+                    self.detect_twirl(landmarks, "R")
+                    self.detect_stop_go(landmarks, "R")
+                    self.detect_swipe(landmarks, "R")
 
                 if self.curr_gesture is not None and self.curr_gesture != "":
                     self.communication_queue.put(("/gesture", self.curr_gesture))
                     self.curr_gesture = None
+                    self.last_queued = datetime.now()
 
                 cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
 
@@ -192,6 +204,10 @@ class VisionHandler:
                 # detect gestures
                 if not(self.vol_start):
                     self.vol_origin = None
+                    self.detect_twirl(landmarks, "L")
+                    self.detect_stop_go(landmarks, "L")
+                    self.detect_swipe(landmarks, "L")
+                if (self.last_queued is None or datetime.now() > self.last_queued + timedelta(seconds = 2)):
                     self.detect_twirl(landmarks, "L")
                     self.detect_stop_go(landmarks, "L")
                     self.detect_swipe(landmarks, "L")
@@ -206,6 +222,7 @@ class VisionHandler:
                 if self.curr_gesture is not None and self.curr_gesture != "":
                     self.communication_queue.put(("/gesture", self.curr_gesture))
                     self.curr_gesture = None
+                    self.last_queued = datetime.now()
 
                 cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
 
@@ -229,7 +246,7 @@ class VisionHandler:
                     smoothed_shoulder = buffered_smooth(self.shoulder_x, self.shoulder_y, self.shoulder_z, shoulder)
 
                     self.communication_queue.put(("/live", [*smoothed_head, *smoothed_shoulder]))
-                    
+
             cv.putText(image, str(int(fps)) + " FPS", (10, 70), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
             cv.imshow('Gesture Recognition', image)
 
