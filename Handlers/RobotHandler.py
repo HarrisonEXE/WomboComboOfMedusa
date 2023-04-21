@@ -24,16 +24,11 @@ class RobotHandler:
         self.randLists = self.setRandList()
 
         self.qList = self.setQList()
-        self.strumArmThreads = self.setStrumArmThreadList()
+        self.armThreads = self.setArmThreadList()
 
-        # self.drumQ = Queue()
-        self.xArmDrumThread1 = Thread(
-            target=self.drummer, args=(5,))
-        self.xArmDrumThread2 = Thread(
-            target=self.drummer, args=(6,))
-
+        # self.xArmDrumThread1 = Thread(target=self.drummer, args=(5,))
+        # self.xArmDrumThread2 = Thread(target=self.drummer, args=(6,))
         self.xArmDrummers = Thread(target=self.drummer2, args=([5, 6],))
-
         self.drumvel = 3
         self.drumtrajs = self.setDrummingTraj()
 
@@ -41,7 +36,6 @@ class RobotHandler:
         self.lightThread = Thread(
             target=self.lightController, args=(self.lightQ,))
 
-        # TODO: replace tracking_offest for vision pos offest with a better solution
         self.offset_counter = 0
         self.tracking_offsets = [0., 0., 0., 0.]
         self.IPts = self.setIPts()
@@ -57,7 +51,7 @@ class RobotHandler:
         q6 = Queue()
         return [q0, q1, q2, q3, q4, q5, q6]
 
-    def setStrumArmThreadList(self):
+    def setArmThreadList(self):
         xArm0Thread = Thread(
             target=self.strumController, args=(self.qList[0], 0,))  # num 2
         xArm1Thread = Thread(
@@ -68,16 +62,12 @@ class RobotHandler:
             target=self.strumController, args=(self.qList[3], 3,))  # num 3
         xArm4Thread = Thread(
             target=self.strumController, args=(self.qList[4], 4,))  # num 5
-
-        #drumming arms
-        #parameters self,queue,num,velocity
         xArm5Thread = Thread(
             target=self.drumController, args=(self.qList[5], 5,))  # num 5
         xArm6Thread = Thread(
             target=self.drumController, args=(self.qList[6], 6,))  # num 6
 
-        return [xArm0Thread, xArm1Thread,
-                xArm2Thread, xArm3Thread, xArm4Thread, xArm5Thread, xArm6Thread]
+        return [xArm0Thread, xArm1Thread, xArm2Thread, xArm3Thread, xArm4Thread, xArm5Thread, xArm6Thread]
 
     def setIPs(self):
         IP0 = [-0.25, 87.38, -2, 126.5, -self.strumD / 2, 51.73, -45]
@@ -86,15 +76,15 @@ class RobotHandler:
         IP3 = [-1.4, 83.95, 0, 120, -self.strumD / 2, 50.65, -45]
         IP4 = [-1.8, 81.8, 0, 120, -self.strumD / 2, 50.65, -45]
         IP5 = [0, 23.1, 0, 51.4, 0, -60.8, 0]
-        FP5 = [0, 51, 0, 60, 0, -12, 0] #refer as 7th in IP
+        FP5 = [0, 51, 0, 60, 0, -12, 0]  # refer as 7th in IP
         IP6 = [0, 23.1, 0, 51.4, 0, -60.8, 0]
-        FP6 = [0, 51, 0, 60, 0, -12, 0] #refer as 8th in IP
+        FP6 = [0, 51, 0, 60, 0, -12, 0]  # refer as 8th in IP
         return [IP0, IP1, IP2, IP3, IP4, IP5, IP6, FP5, FP6]
 
     def setIPts(self):
-        '''
+        """
         Initial Positions for tracking mode
-        '''
+        """
         IPt0 = [-0.25, 0, -2, 126.5, 0, 51.73, -45]
         IPt1 = [2.62, 0, 0, 127.1, 0, 50.13, -45]
         IPt2 = [1.3, 0, 0, 120, 0, 54.2, -45]
@@ -131,13 +121,13 @@ class RobotHandler:
         print(f"{len(self.arms)} arms connected.")
 
     def startThreads(self):
-        for thread in self.strumArmThreads:
+        for thread in self.armThreads:
             thread.start()
         self.xArmDrummers.start()
+        self.lightThread.start()
+        print("Robot threads started")
         # self.xArmDrumThread1.start()
         # self.xArmDrumThread2.start()
-        # self.lightThread.start()
-        print("Robot threads started")
 
     def moveToStart(self, index):
         self.arms[index].set_servo_angle(angle=[0.0, 0.0, 0.0, 1.57, 0.0, 0, 0.0], wait=False, speed=0.4,
@@ -317,16 +307,16 @@ class RobotHandler:
                     t1 = time.time()
 
             if arms[1] == 6:
-                traj2 = self.drumtrajs[str(self.drumvel+10)][0]
-                traj4 = self.drumtrajs[str(self.drumvel+10)][1]
-                traj6 = self.drumtrajs[str(self.drumvel+10)][2]
+                traj2 = self.drumtrajs[str(self.drumvel + 10)][0]
+                traj4 = self.drumtrajs[str(self.drumvel + 10)][1]
+                traj6 = self.drumtrajs[str(self.drumvel + 10)][2]
                 if time.time() - t2 >= 2:
                     self.drumbot(traj2, traj4, traj6, arms[1])
                     print("drum vel ", self.drumvel)
                     t2 = time.time()
 
-    def drumController(self, queue, num):
-        #formerly known as drummer funciton
+    def drumController(self, queue):
+        # formerly known as drummer function
         while True:
             mode, data = queue.get()
             if data == "up":
@@ -359,19 +349,14 @@ class RobotHandler:
             self.offset_counter += 1
         else:
             # TODO: Following values are hardcoded for xArm 0 for testing purposes, need to be generalized for all robots
-            # j3 = np.interp(float(shoulder[0]) - self.tracking_offsets[3], [-1, 1], [-30, 30])
-            # j4 = np.interp(float(shoulder[1]) - self.tracking_offsets[2], [-1, 1], [70, 170])
-            # j5 = np.interp(math.degrees(float(head[0]) - self.tracking_offsets[0]), [-1, 1], [-70, 70])
-            # j6 = np.interp(math.degrees(float(head[1]) - self.tracking_offsets[1]), [-1, 1], [-70, 70])
+            j3 = np.interp(float(shoulder[0]) - self.tracking_offsets[3], [-1, 1], [-30, 30])
+            j4 = np.interp(float(shoulder[1]) - self.tracking_offsets[2], [-1, 1], [70, 170])
+            j5 = np.interp(math.degrees(float(head[0]) - self.tracking_offsets[0]), [-1, 1], [-70, 70])
+            j6 = np.interp(math.degrees(float(head[1]) - self.tracking_offsets[1]), [-1, 1], [-70, 70])
 
             p = self.getAngles(num)
-            # p[2] = j3
-            # p[3] = j4
-            # p[4] = j5
-            # p[5] = j6
-
-            j5 = np.interp(math.degrees(float(head[0]) - self.tracking_offsets[0]), [-1, 1], [-60, 60])
-            j6 = np.interp(math.degrees(float(head[1]) - self.tracking_offsets[1]), [-1, 1], [-60, 60])
+            p[2] = j3
+            p[3] = j4
             p[4] = j5
             p[5] = j6
 
