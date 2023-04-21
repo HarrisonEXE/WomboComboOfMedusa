@@ -41,6 +41,7 @@ class RobotHandler:
         self.IPts = self.setIPts()
         self.reset_discontinuity = [True, True, True, True, True]
         self.temp_time_tracker = 0
+        self.custom_mappings = self.setVisionMappings()
 
     def setQList(self):
         q0 = Queue()
@@ -370,17 +371,18 @@ class RobotHandler:
                     float(shoulder[2]) - self.tracking_offsets[5]
                 ]
 
-                save_vision_data(f'logs/vision_data_arm_{num}.csv', time.time(), smoothed_values=[*offset_head, *offset_shoulder])
+                save_vision_data(f'logs/vision_data_arm_{num}.csv', time.time(),
+                                 smoothed_values=[*offset_head, *offset_shoulder])
 
-                #TODO: add individual mappings for each arm and add more joints
-                j4 = np.interp(offset_head[1], [-1.0, 1.0], [150, 210])
-                j5 = np.interp(offset_head[0], [-0.75, 0.75], [30, -60])
+                # TODO: add individual mappings for each arm and add more joints
+                j4 = self.apply_vision_mapping(num, joint=3, value=offset_head[1])
+                j5 = self.apply_vision_mapping(num, joint=4, value=offset_head[0])
 
                 p = self.getAngles(num)
                 p[3] = j4
                 p[4] = j5
 
-                # self.setAngles(num, p)
+                self.setAngles(num, p)
 
     def posebot(self, num, play):
         if play == 1:  # stop
@@ -505,8 +507,6 @@ class RobotHandler:
         self.arms[index].set_servo_angle_j(angles=angles, is_radian=is_radian)
 
     # --------------- Controller Helpers - Needs Refactoring --------------- #
-    # TODO: Refactor this to be more readable, and less redundant
-    # TODO: Check if duplicate code can be removed
     def poseToPose(self, poseI, poseF, t):
         traj = []
         for p in range(len(poseI)):
@@ -534,3 +534,26 @@ class RobotHandler:
                 track_time = time.time()
                 time.sleep(0.0001)
             initial_time += 0.004
+
+    def setVisionMappings(self):
+        """
+        return: {arm_num : {joint_num: {'input_range': [], 'output_range':[]}}}
+        """
+        # TODO: 1. Add more arms here
+        # TODO: 2. Add more joint mappings
+        # TODO: 3. Measure max range of vision data values
+        return {
+            3: {
+                3: {'input_range': [-0.75, 0.75], 'output_range': [150, 210]},
+                4: {'input_range': [-0.75, 0.75], 'output_range': [30, -60]},
+            },
+        }
+
+    def apply_vision_mapping(self, num, joint, value):
+        current_angles = self.getAngles(num)
+
+        if num in self.custom_mappings and joint in self.custom_mappings[num]:
+            mapping = self.custom_mappings[num][joint]
+            return np.interp(value, mapping['input_range'], mapping['output_range'])
+        else:
+            return current_angles[joint]
