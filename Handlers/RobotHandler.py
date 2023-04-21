@@ -7,7 +7,7 @@ from queue import Queue
 from threading import Thread
 from Helpers import positions
 from Helpers.Utils import createRandList, delay
-from Helpers.TrajectoryGeneration import fifth_poly, spline_poly
+from Helpers.TrajectoryGeneration import fifth_poly, fifth_poly2, spline_poly
 from Helpers.DataFilters import save_joint_data
 
 
@@ -26,9 +26,16 @@ class RobotHandler:
         self.qList = self.setQList()
         self.strumArmThreads = self.setStrumArmThreadList()
 
-        self.drumQ = Queue()
-        self.xArmDrumThread = Thread(
-            target=self.drumController, args=(self.drumQ, 5,))
+        # self.drumQ = Queue()
+        self.xArmDrumThread1 = Thread(
+            target=self.drummer, args=(5,))
+        self.xArmDrumThread2 = Thread(
+            target=self.drummer, args=(6,))
+
+        self.xArmDrummers = Thread(target=self.drummer2, args=([5, 6],))
+
+        self.drumvel = 3
+        self.drumtrajs = self.setDrummingTraj()
 
         self.lightQ = Queue()
         self.lightThread = Thread(
@@ -46,7 +53,9 @@ class RobotHandler:
         q2 = Queue()
         q3 = Queue()
         q4 = Queue()
-        return [q0, q1, q2, q3, q4]
+        q5 = Queue()
+        q6 = Queue()
+        return [q0, q1, q2, q3, q4, q5, q6]
 
     def setStrumArmThreadList(self):
         xArm0Thread = Thread(
@@ -59,8 +68,16 @@ class RobotHandler:
             target=self.strumController, args=(self.qList[3], 3,))  # num 3
         xArm4Thread = Thread(
             target=self.strumController, args=(self.qList[4], 4,))  # num 5
+
+        #drumming arms
+        #parameters self,queue,num,velocity
+        xArm5Thread = Thread(
+            target=self.drumController, args=(self.qList[5], 5,))  # num 5
+        xArm6Thread = Thread(
+            target=self.drumController, args=(self.qList[6], 6,))  # num 6
+
         return [xArm0Thread, xArm1Thread,
-                xArm2Thread, xArm3Thread, xArm4Thread]
+                xArm2Thread, xArm3Thread, xArm4Thread, xArm5Thread, xArm6Thread]
 
     def setIPs(self):
         IP0 = [-0.25, 87.38, -2, 126.5, -self.strumD / 2, 51.73, -45]
@@ -68,7 +85,11 @@ class RobotHandler:
         IP2 = [1.3, 81.68, 0.0, 120, -self.strumD / 2, 54.2, -45]
         IP3 = [-1.4, 83.95, 0, 120, -self.strumD / 2, 50.65, -45]
         IP4 = [-1.8, 81.8, 0, 120, -self.strumD / 2, 50.65, -45]
-        return [IP0, IP1, IP2, IP3, IP4]
+        IP5 = [0, 23.1, 0, 51.4, 0, -60.8, 0]
+        FP5 = [0, 51, 0, 60, 0, -12, 0] #refer as 7th in IP
+        IP6 = [0, 23.1, 0, 51.4, 0, -60.8, 0]
+        FP6 = [0, 51, 0, 60, 0, -12, 0] #refer as 8th in IP
+        return [IP0, IP1, IP2, IP3, IP4, IP5, IP6, FP5, FP6]
 
     def setIPts(self):
         '''
@@ -93,7 +114,9 @@ class RobotHandler:
             arm2 = XArmAPI('192.168.1.244')
             arm3 = XArmAPI('192.168.1.203')
             arm4 = XArmAPI('192.168.1.237')
-            self.arms = [arm0, arm1, arm2, arm3, arm4]
+            arm5 = XArmAPI('192.168.1.236')
+            arm6 = XArmAPI('192.168.1.204')
+            self.arms = [arm0, arm1, arm2, arm3, arm4, arm5, arm6]
 
     def connectToArms(self):
         for i in range(len(self.arms)):
@@ -110,8 +133,10 @@ class RobotHandler:
     def startThreads(self):
         for thread in self.strumArmThreads:
             thread.start()
-        # self.xArmDrumThread.start()
-        self.lightThread.start()
+        self.xArmDrummers.start()
+        # self.xArmDrumThread1.start()
+        # self.xArmDrumThread2.start()
+        # self.lightThread.start()
         print("Robot threads started")
 
     def moveToStart(self, index):
@@ -215,30 +240,101 @@ class RobotHandler:
 
                 i += 1
 
-    def drumController(self, queue, num):
-        # drumQ.put(1)
-        trajz = spline_poly(325, 35, .08, .08, 0.01)
-        trajp = spline_poly(-89, -28, .08, .08, 0.01)
+    def setDrummingTraj(self):
 
-        trajz2 = spline_poly(325, 35, .08, .08, .1)
-        trajp2 = spline_poly(-89, -28, .08, .08, .1)
+        traj2_4 = spline_poly(self.IP[5][1], self.IP[7][1] + 1, self.IP[5][1], .4, .08, 0, 0, 32, .5, 0)
+        traj4_4 = spline_poly(self.IP[5][3], self.IP[7][3] + 1, self.IP[5][3], .3, .08, .13, .1, 0, .5, 0)
+        traj6_4 = spline_poly(self.IP[5][5], self.IP[7][5] + 1, self.IP[5][5], .2, .08, .35, .1, 32, .5, 0)
 
-        trajz3 = spline_poly(325, 35, .08, .08, .15)
-        trajp3 = spline_poly(-89, -28, .08, .08, .15)
+        traj2_3 = spline_poly(self.IP[5][1], self.IP[7][1] - 2, self.IP[5][1], .5, .08, 0, 0, 24, .5, 0)
+        traj4_3 = spline_poly(self.IP[5][3], self.IP[7][3] - 2, self.IP[5][3], .4, .08, .13, .1, 0, .5, 0)
+        traj6_3 = spline_poly(self.IP[5][5], self.IP[7][5] - 2, self.IP[5][5], .3, .08, .35, .1, 24, .5, 0)
 
-        i = 0
+        traj2_2 = spline_poly(self.IP[5][1], self.IP[7][1] - 4, self.IP[5][1], .6, .08, 0, 0, 16, .5, 0)
+        traj4_2 = spline_poly(self.IP[5][3], self.IP[7][3] - 4, self.IP[5][3], .5, .08, .13, .1, 0, .5, 0)
+        traj6_2 = spline_poly(self.IP[5][5], self.IP[7][5] - 4, self.IP[5][5], .4, .08, .35, .1, 16, .5, 0)
+
+        traj2_1 = spline_poly(self.IP[5][1], self.IP[7][1] - 6, self.IP[5][1], .7, .08, 0, 0, 8, .5, 0)
+        traj4_1 = spline_poly(self.IP[5][3], self.IP[7][3] - 6, self.IP[5][3], .6, .08, .13, .1, 0, .5, 0)
+        traj6_1 = spline_poly(self.IP[5][5], self.IP[7][5] - 6, self.IP[5][5], .5, .08, .35, .1, 8, .5, 0)
+
+        traj2_14 = spline_poly(self.IP[5][1], self.IP[7][1] + 6, self.IP[5][1], .4, .08, 0, 0, 32, .5, 0)
+        traj4_14 = spline_poly(self.IP[5][3], self.IP[7][3] + 6, self.IP[5][3], .3, .08, .13, .1, 0, .5, 0)
+        traj6_14 = spline_poly(self.IP[5][5], self.IP[7][5] + 6, self.IP[5][5], .2, .08, .35, .1, 32, .5, 0)
+
+        traj2_13 = spline_poly(self.IP[5][1], self.IP[7][1] - 2, self.IP[5][1], .5, .08, 0, 0, 24, .5, 0)
+        traj4_13 = spline_poly(self.IP[5][3], self.IP[7][3] - 2, self.IP[5][3], .4, .08, .13, .1, 0, .5, 0)
+        traj6_13 = spline_poly(self.IP[5][5], self.IP[7][5] - 2, self.IP[5][5], .3, .08, .35, .1, 24, .5, 0)
+
+        traj2_12 = spline_poly(self.IP[5][1], self.IP[7][1] - 4, self.IP[5][1], .6, .08, 0, 0, 16, .5, 0)
+        traj4_12 = spline_poly(self.IP[5][3], self.IP[7][3] - 4, self.IP[5][3], .5, .08, .13, .1, 0, .5, 0)
+        traj6_12 = spline_poly(self.IP[5][5], self.IP[7][5] - 4, self.IP[5][5], .4, .08, .35, .1, 16, .5, 0)
+
+        traj2_11 = spline_poly(self.IP[5][1], self.IP[7][1] - 6, self.IP[5][1], .7, .08, 0, 0, 8, .5, 0)
+        traj4_11 = spline_poly(self.IP[5][3], self.IP[7][3] - 6, self.IP[5][3], .6, .08, .13, .1, 0, .5, 0)
+        traj6_11 = spline_poly(self.IP[5][5], self.IP[7][5] - 6, self.IP[5][5], .5, .08, .35, .1, 8, .5, 0)
+
+        return {
+            '1': [traj2_1, traj4_1, traj6_1],
+            '2': [traj2_2, traj4_2, traj6_2],
+            '3': [traj2_3, traj4_3, traj6_3],
+            '4': [traj2_4, traj4_4, traj6_4],
+            '11': [traj2_11, traj4_11, traj6_11],
+            '12': [traj2_12, traj4_12, traj6_12],
+            '13': [traj2_13, traj4_13, traj6_13],
+            '14': [traj2_14, traj4_14, traj6_14]
+        }
+
+    # def drummer(self, num):
+    #     t = time.time()
+    #     while True:
+    #         if num == 5:
+    #             traj2 = self.drumtrajs[str(self.drumvel)][0]
+    #             traj4 = self.drumtrajs[str(self.drumvel)][1]
+    #             traj6 = self.drumtrajs[str(self.drumvel)][2]
+    #
+    #         if num == 6:
+    #             traj2 = self.drumtrajs[str(self.drumvel+10)][0]
+    #             traj4 = self.drumtrajs[str(self.drumvel+10)][1]
+    #             traj6 = self.drumtrajs[str(self.drumvel+10)][2]
+    #
+    #         if time.time() - t >= 3 and num == 6:
+    #             self.drumbot(traj2, traj4, traj6, num)
+    #             print("drum vel ", self.drumvel)
+    #             t = time.time()
+
+    def drummer2(self, arms):
+        t1 = time.time()
+        t2 = time.time()
         while True:
-            i += 1
-            queue.get()
+            if arms[0] == 5:
+                traj2 = self.drumtrajs[str(self.drumvel)][0]
+                traj4 = self.drumtrajs[str(self.drumvel)][1]
+                traj6 = self.drumtrajs[str(self.drumvel)][2]
+                if time.time() - t1 >= 2:
+                    self.drumbot(traj2, traj4, traj6, arms[0])
+                    print("drum vel ", self.drumvel)
+                    t1 = time.time()
 
-            if i % 3 == 1:
-                self.drumbot(trajz, trajp, num)
+            if arms[1] == 6:
+                traj2 = self.drumtrajs[str(self.drumvel+10)][0]
+                traj4 = self.drumtrajs[str(self.drumvel+10)][1]
+                traj6 = self.drumtrajs[str(self.drumvel+10)][2]
+                if time.time() - t2 >= 2:
+                    self.drumbot(traj2, traj4, traj6, arms[1])
+                    print("drum vel ", self.drumvel)
+                    t2 = time.time()
 
-            elif i % 3 == 2:
-                self.drumbot(trajz2, trajp2, num)
-
-            elif i % 3 == 0:
-                self.drumbot(trajz3, trajp3, num)
+    def drumController(self, queue, num):
+        #formerly known as drummer funciton
+        while True:
+            mode, data = queue.get()
+            if data == "up":
+                if self.drumvel < 4:
+                    self.drumvel += 1
+            elif data == "down":
+                if self.drumvel > 1:
+                    self.drumvel -= 1
 
     # --------------- Controller Helpers --------------- #
     def trackbot(self, num, data):
@@ -333,17 +429,31 @@ class RobotHandler:
                 time.sleep(0.0001)
             initial_time += 0.004
 
-    def drumbot(self, trajz, trajp, arm):
+    def drumbot(self, traj2, traj4, traj6, arm):
+        a = time.time()
+        # def drumbot(traj1, traj2, traj3, traj4, traj5, traj6, traj7, arm):
+
+        # j_angles = pos
         track_time = time.time()
         initial_time = time.time()
-        for i in range(len(trajz)):
-            mvpose = [492, 0, trajz[i], 180, trajp[i], 0]
-            self.drums[0].set_servo_cartesian(mvpose, speed=100, mvacc=2000)
+        for i in range(min(len(traj2), len(traj4), len(traj6))):
+            # for i in range(min(len(traj1),len(traj2),len(traj3),len(traj4),len(traj5),len(traj6),len(traj7))):
+            # run command
+            # start_time = time.time()
+            # j_angles[4] = traj[i]
+            # arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
+
+            jointangles = [0, traj2[i], 0, traj4[i], 0, traj6[i], 0]
+            # jointangles = [traj1[i], traj2[i], traj3[i], traj4[i], traj5[i], traj6[i], traj7[i]]
+            # print(traj6[i])
+            self.arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
 
             while track_time < initial_time + 0.004:
                 track_time = time.time()
                 time.sleep(0.0001)
             initial_time += 0.004
+
+        print("arm: ", arm, "traj time: ", time.time() - a)
 
     # Picks and sends indexes, defined by anglesToSend, of a 6 item list, defined by listToSend
     def listSend(self, listToSend, anglesToSend):
