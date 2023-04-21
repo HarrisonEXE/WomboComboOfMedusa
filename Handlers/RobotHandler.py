@@ -1,3 +1,4 @@
+import math
 import time
 import numpy as np
 import serial
@@ -13,7 +14,7 @@ from Helpers.DataFilters import save_joint_data
 class RobotHandler:
     def __init__(self, is_lab_work=True):
         self.is_lab_work = is_lab_work
-        self.lightMode = False
+        self.lightMode = True
         self.arms = []
         self.strumD = 30
         self.speed = 0.25
@@ -34,7 +35,10 @@ class RobotHandler:
             target=self.lightController, args=(self.lightQ,))
 
         # TODO: replace tracking_offest for vision pos offest with a better solution
-        self.tracking_offset = 0
+        self.offset_counter = 0
+        self.tracking_offsets = [0., 0., 0., 0.]
+        self.IPts = self.setIPts()
+        self.reset_discontinuity = [True, True, True, True, True]
 
     def setQList(self):
         q0 = Queue()
@@ -65,6 +69,17 @@ class RobotHandler:
         IP3 = [-1.4, 83.95, 0, 120, -self.strumD / 2, 50.65, -45]
         IP4 = [-1.8, 81.8, 0, 120, -self.strumD / 2, 50.65, -45]
         return [IP0, IP1, IP2, IP3, IP4]
+
+    def setIPts(self):
+        '''
+        Initial Positions for tracking mode
+        '''
+        IPt0 = [-0.25, 0, -2, 126.5, 0, 51.73, -45]
+        IPt1 = [2.62, 0, 0, 127.1, 0, 50.13, -45]
+        IPt2 = [1.3, 0, 0, 120, 0, 54.2, -45]
+        IPt3 = [-1.4, 0, 0, 120, 0, 50.65, -45]
+        IPt4 = [-1.8, 0, 0, 120, 0, 50.65, -45]
+        return [IPt0, IPt1, IPt2, IPt3, IPt4]
 
     def setupRobots(self):
         self.buildArmsList()
@@ -227,30 +242,46 @@ class RobotHandler:
 
     # --------------- Controller Helpers --------------- #
     def trackbot(self, num, data):
-        head = data[0]
-        shoulder = data[1]
+        if self.reset_discontinuity[num]:
+            self.reset_discontinuity[num] = False
+            poseI = self.getAngles(num)
+            poseF = self.IPts[num]
 
-        if self.tracking_offset <= 300:
-            offset0 = head['x']
-            offset1 = head['y']
-            offset3 = shoulder['y']
-            offset4 = shoulder['x']
+            newPos = self.poseToPose(poseI, poseF, 5)
+            self.gotoPose(num, newPos)
 
-        # TODO: Following values are hardcoded for xArm 0 for testing purposes, need to be generalized for all robots
-        j3 = np.interp(shoulder['x'] - offset4, [-0.5, 0.5], [-30, 30])
-        j4 = np.interp(shoulder['y'] - offset3, [-0.5, 0.5], [70, 120])
-        j5 = np.interp(head['x'] - offset0, [-0.5, 0.5], [-60, 60])
-        j6 = np.interp(head['y'] - offset1, [-0.5, 0.5], [-70, 70])
+            print("pose done")
 
-        p = self.getAngles(num)
-        p[2] = j3
-        p[3] = j4
-        p[4] = j5
-        p[5] = j6
+        head = data[:3]
+        shoulder = data[3:]
 
-        # save_joint_data('joint_data.csv', time.time(), p)
-        self.setAngles(num, p)
-        self.tracking_offset += 1
+        if self.offset_counter <= 100:
+            self.tracking_offsets[0] = float(head[0])
+            self.tracking_offsets[1] = float(head[1])
+            self.tracking_offsets[2] = float(shoulder[1])
+            self.tracking_offsets[3] = float(shoulder[0])
+            self.offset_counter += 1
+        else:
+            # TODO: Following values are hardcoded for xArm 0 for testing purposes, need to be generalized for all robots
+            # j3 = np.interp(float(shoulder[0]) - self.tracking_offsets[3], [-1, 1], [-30, 30])
+            # j4 = np.interp(float(shoulder[1]) - self.tracking_offsets[2], [-1, 1], [70, 170])
+            # j5 = np.interp(math.degrees(float(head[0]) - self.tracking_offsets[0]), [-1, 1], [-70, 70])
+            # j6 = np.interp(math.degrees(float(head[1]) - self.tracking_offsets[1]), [-1, 1], [-70, 70])
+
+            p = self.getAngles(num)
+            # p[2] = j3
+            # p[3] = j4
+            # p[4] = j5
+            # p[5] = j6
+
+            j5 = np.interp(math.degrees(float(head[0]) - self.tracking_offsets[0]), [-1, 1], [-60, 60])
+            j6 = np.interp(math.degrees(float(head[1]) - self.tracking_offsets[1]), [-1, 1], [-60, 60])
+            p[4] = j5
+            p[5] = j6
+
+            save_joint_data('joint_data.csv', time.time(), p)
+            print(p)
+            self.setAngles(num, p)
 
     def posebot(self, num, play):
         if play == 1:  # stop
