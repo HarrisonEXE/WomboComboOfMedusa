@@ -191,9 +191,9 @@ class VisionHandler:
 
             if results.pose_landmarks is not None:
                 landmarks = results.pose_landmarks.landmark
-                head_x = landmarks[self.holistic.PoseLandmark.NOSE.value].x
-                head_y = landmarks[self.holistic.PoseLandmark.NOSE.value].y
-                head_z = landmarks[self.holistic.PoseLandmark.NOSE.value].z
+                head_x = (landmarks[self.holistic.PoseLandmark.NOSE.value].x + landmarks[self.holistic.PoseLandmark.RIGHT_EAR.value].x + landmarks[self.holistic.PoseLandmark.LEFT_EAR.value].x + landmarks[self.holistic.PoseLandmark.RIGHT_EYE.value].x + landmarks[self.holistic.PoseLandmark.LEFT_EYE.value].x) /5
+                head_y = (landmarks[self.holistic.PoseLandmark.NOSE.value].y + landmarks[self.holistic.PoseLandmark.RIGHT_EAR.value].y + landmarks[self.holistic.PoseLandmark.LEFT_EAR.value].y + landmarks[self.holistic.PoseLandmark.RIGHT_EYE.value].y + landmarks[self.holistic.PoseLandmark.LEFT_EYE.value].y) /5
+                head_z = (landmarks[self.holistic.PoseLandmark.NOSE.value].z + landmarks[self.holistic.PoseLandmark.RIGHT_EAR.value].z + landmarks[self.holistic.PoseLandmark.LEFT_EAR.value].z + landmarks[self.holistic.PoseLandmark.RIGHT_EYE.value].z + landmarks[self.holistic.PoseLandmark.LEFT_EYE.value].z) /5
                 shoulder_x = (landmarks[self.holistic.PoseLandmark.RIGHT_SHOULDER.value].x + landmarks[
                     self.holistic.PoseLandmark.LEFT_SHOULDER.value].x) / 2
                 shoulder_y = (landmarks[self.holistic.PoseLandmark.RIGHT_SHOULDER.value].y + landmarks[
