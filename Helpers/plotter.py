@@ -91,21 +91,18 @@ def plot_vision(filename):
 #         plt.legend()
 #         plt.show()
 def main():
-    parser = argparse.ArgumentParser(description='Plot vision or joint data.')
-    parser.add_argument('--vision', action='store_true', help='Plot vision data')
-    parser.add_argument('--joint', action='store_true', help='Plot joint data')
-    parser.add_argument('-v', '--vision_file', type=str, default='vision_ema.csv', help='Vision data file')
-    parser.add_argument('-j', '--joint_file', type=str, default='joint_data.csv', help='Joint data file')
+    parser = argparse.ArgumentParser(description="Plot joint angles and vision data")
+    parser.add_argument("arm_number", type=int, help="Arm number for which you want to plot data")
+    parser.add_argument("--plot", choices=["joints", "vision"], default="joints", help="Select the data type to plot (joints or vision)")
 
     args = parser.parse_args()
 
-    if args.vision:
-        print(f"Plotting vision data from {args.vision_file}...")
-        plot_vision(args.vision_file)
-
-    if args.joint:
-        print(f"Plotting joint angles from {args.joint_file}...")
-        plot_joint_angles(args.joint_file)
+    if args.plot == "joints":
+        joint_file = f'logs/joint_data_arm_{args.arm_number}.csv'
+        plot_joint_angles(joint_file)
+    elif args.plot == "vision":
+        vision_file = f'logs/vision_data_arm_{args.arm_number}.csv'
+        plot_vision(vision_file)
 
 if __name__ == "__main__":
     main()
