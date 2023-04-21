@@ -1,10 +1,11 @@
+import time
 from datetime import datetime, timedelta
 from queue import Queue
 
 import cv2 as cv
 import mediapipe as mp
 
-from Helpers.DataFilters import buffered_smooth
+from Helpers.DataFilters import buffered_smooth, save_vision_data
 from Handlers.DrawingHandler import DrawingHandler
 from Helpers.CvFpsCalc import CvFpsCalc
 from Helpers.HandGestures import *
@@ -245,7 +246,8 @@ class VisionHandler:
                     smoothed_head = buffered_smooth(self.head_x, self.head_y, self.head_z, head)
                     smoothed_shoulder = buffered_smooth(self.shoulder_x, self.shoulder_y, self.shoulder_z, shoulder)
 
-                    self.communication_queue.put(("/live", [*smoothed_head, *smoothed_shoulder]))
+                    if smoothed_head is not None and smoothed_shoulder is not None:
+                        self.communication_queue.put(("/live", [*smoothed_head, *smoothed_shoulder]))
 
             cv.putText(image, str(int(fps)) + " FPS", (10, 70), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
             cv.imshow('Gesture Recognition', image)

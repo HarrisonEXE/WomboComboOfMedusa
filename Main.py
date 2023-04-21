@@ -1,3 +1,4 @@
+import argparse
 from Demos.KeyboardDemo import KeyboardDemo
 from Demos.KeyboardRandomNoteDemo import KeyboardRandomNoteDemo
 from Demos.KeyboardRobotlessDemo import KeyboardRobotlessDemo
@@ -6,10 +7,6 @@ from Demos.RandomizedMicDemo import RandomizedMicDemo
 from Demos.VoiceRecognizer import VoiceDemo
 from Demos.VisionTrackerDemo import VisionTrackerDemo
 from Handlers.RobotHandler import RobotHandler
-# from test import mainmethod
-from Handlers.VisionHandler import VisionHandler
-
-from multiprocessing import Process
 
 from Performance import Performance
 
@@ -30,29 +27,25 @@ class MedusaDemo:
         self.current_demo.start()
 
 
-# def f():
-#     mainmethod()
-#
-#
-# def g():
-#     robotHandler = RobotHandler()
-#     is_lab_work = False
-#     demo = MedusaDemo(robotHandler)
-#     demo.run()
+def run_demo():
+    robotHandler = RobotHandler()
+    demo = MedusaDemo(robotHandler)
+    demo.run()
 
 
-if __name__ == '__main__':
-    # visionProcess = Process(target=f)
-    # audioProcess = Process(target=g)
-
-    # visionProcess.start()
-    # audioProcess.start()
-
-    # visionHandler = VisionHandler()
-    # visionHandler.start()
-    # MedusaDemo(RobotHandler()).run()
+def run_performance():
     robotHandler = RobotHandler(is_lab_work=True)
     performance = Performance(robotHandler, is_lab_work=True)
     performance.runSequence()
 
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Run Medusa Demo")
+    parser.add_argument("--mode", choices=["demo", "performance"], default="performance", help="Select the mode to run (demo or performance)")
+
+    args = parser.parse_args()
+
+    if args.mode == "demo":
+        run_demo()
+    elif args.mode == "performance":
+        run_performance()
