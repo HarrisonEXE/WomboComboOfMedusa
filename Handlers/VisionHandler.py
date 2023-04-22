@@ -249,6 +249,9 @@ class VisionHandler:
             elif key_pressed == ord('t'):
                 self.if_tracking = not self.if_tracking
                 print("key pressed - live tracking", self.if_tracking)
+            elif key_pressed == ord('p'):
+                self.communication_queue.put(("/updateState", "drums"))
+                print("key pressed - play/pause drums")
 
             fps = self.cvFpsCalc.get()
 

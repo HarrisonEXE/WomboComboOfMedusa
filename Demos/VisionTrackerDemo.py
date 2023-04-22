@@ -79,3 +79,6 @@ class VisionTrackerDemo(IRobotDemo):
                 self.qList[2].put([mode, data])
                 self.qList[3].put([mode, data])
                 self.qList[4].put([mode, data])
+            elif address == "/updateState":
+                if data == "drums":
+                    self.robotHandler.switch_drum_state()

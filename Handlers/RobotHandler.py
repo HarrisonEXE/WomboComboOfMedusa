@@ -14,11 +14,11 @@ from Helpers.DataFilters import save_joint_data, save_vision_data
 class RobotHandler:
     def __init__(self, is_lab_work=True):
         self.is_lab_work = is_lab_work
-        self.lightMode = True
+        self.lightMode = False
         self.arms = []
         self.strumD = 30
         self.speed = 0.25
-        # self.arduino = serial.Serial('/dev/ttyACM0', 9600) # for Linux
+        self.arduino = serial.Serial('/dev/ttyACM0', 9600) # for Linux
         # self.arduino = serial.Serial('com4', 9600)    # for PC
         self.IP = self.setIPs()
         self.randLists = self.setRandList()
@@ -31,6 +31,7 @@ class RobotHandler:
         self.xArmDrummers = Thread(target=self.drummer2, args=([5, 6],))
         self.drumvel = 3
         self.drumtrajs = self.setDrummingTraj()
+        self.playDrums = False
 
         self.lightQ = Queue()
         self.lightThread = Thread(
@@ -125,7 +126,7 @@ class RobotHandler:
     def startThreads(self):
         for thread in self.armThreads:
             thread.start()
-        # self.xArmDrummers.start()
+        self.xArmDrummers.start()
         self.lightThread.start()
         print("Robot threads started")
         # self.xArmDrumThread1.start()
@@ -299,23 +300,24 @@ class RobotHandler:
         t1 = time.time()
         t2 = time.time()
         while True:
-            if arms[0] == 5:
-                traj2 = self.drumtrajs[str(self.drumvel)][0]
-                traj4 = self.drumtrajs[str(self.drumvel)][1]
-                traj6 = self.drumtrajs[str(self.drumvel)][2]
-                if time.time() - t1 >= 2:
-                    self.drumbot(traj2, traj4, traj6, arms[0])
-                    print("drum vel ", self.drumvel)
-                    t1 = time.time()
+            if self.playDrums:
+                if arms[0] == 5:
+                    traj2 = self.drumtrajs[str(self.drumvel)][0]
+                    traj4 = self.drumtrajs[str(self.drumvel)][1]
+                    traj6 = self.drumtrajs[str(self.drumvel)][2]
+                    if time.time() - t1 >= 2:
+                        self.drumbot(traj2, traj4, traj6, arms[0])
+                        print("drum vel ", self.drumvel)
+                        t1 = time.time()
 
-            if arms[1] == 6:
-                traj2 = self.drumtrajs[str(self.drumvel + 10)][0]
-                traj4 = self.drumtrajs[str(self.drumvel + 10)][1]
-                traj6 = self.drumtrajs[str(self.drumvel + 10)][2]
-                if time.time() - t2 >= 2:
-                    self.drumbot(traj2, traj4, traj6, arms[1])
-                    print("drum vel ", self.drumvel)
-                    t2 = time.time()
+                if arms[1] == 6:
+                    traj2 = self.drumtrajs[str(self.drumvel + 10)][0]
+                    traj4 = self.drumtrajs[str(self.drumvel + 10)][1]
+                    traj6 = self.drumtrajs[str(self.drumvel + 10)][2]
+                    if time.time() - t2 >= 2:
+                        self.drumbot(traj2, traj4, traj6, arms[1])
+                        print("drum vel ", self.drumvel)
+                        t2 = time.time()
 
     def drumController(self, queue):
         # formerly known as drummer function
@@ -557,3 +559,6 @@ class RobotHandler:
             return np.interp(value, mapping['input_range'], mapping['output_range'])
         else:
             return current_angles[joint]
+
+    def switch_drum_state(self):
+        self.playDrums = not self.playDrums
