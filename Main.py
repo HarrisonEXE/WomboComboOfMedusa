@@ -7,8 +7,7 @@ from Demos.RandomizedMicDemo import RandomizedMicDemo
 from Demos.VoiceRecognizer import VoiceDemo
 from Demos.VisionTrackerDemo import VisionTrackerDemo
 from Handlers.RobotHandler import RobotHandler
-
-# from Performance import Performance
+from Performance import Performance
 
 
 class MedusaDemo:
