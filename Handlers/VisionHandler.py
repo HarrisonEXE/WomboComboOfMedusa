@@ -172,7 +172,7 @@ class VisionHandler:
                             self.curr_gesture = "swipe_left"
                         else:
                             self.curr_gesture = "swipe_right"
-                        print("swiped")
+                        # print("swiped")
                         self.tracker_x_right = []
                         self.tracker_y_right = []
                         self.tracker_z_right = []
@@ -212,7 +212,7 @@ class VisionHandler:
                             self.curr_gesture = "swipe_left"
                         else:
                             self.curr_gesture = "swipe_right"
-                        print("swiped")
+                        # print("swiped")
                         self.tracker_x_left = []
                         self.tracker_y_left = []
                         self.tracker_z_left = []
@@ -294,7 +294,7 @@ class VisionHandler:
 
                 if self.curr_gesture is not None and self.curr_gesture != "":
                     self.communication_queue.put(("/gesture", self.curr_gesture))
-                    print(self.curr_gesture)
+                    # print(self.curr_gesture)
                     self.curr_gesture = None
                     self.last_queued = datetime.now()
 
