@@ -12,7 +12,11 @@ from Helpers.HandGestures import *
 
 
 class VisionHandler:
+<<<<<<< Updated upstream
     def __init__(self, device=4, cap_width=960, cap_height=540, use_static_image_mode=True,
+=======
+    def __init__(self, device=0, cap_width=960, cap_height=540, use_static_image_mode=True,
+>>>>>>> Stashed changes
                  min_detection_confidence=0.7, min_tracking_confidence=0.5, communication_queue: Queue = Queue()):
         self.cap = cv.VideoCapture(device)
         if not self.cap.isOpened():
@@ -39,8 +43,10 @@ class VisionHandler:
 
     def initialize_gesture_detection_state(self):
         # twirl variables
-        self.count_twirl = 0
-        self.curr_time_twirl = None
+        self.count_twirl_left = 0
+        self.curr_time_twirl_left = None
+        self.count_twirl_right = 0
+        self.curr_time_twirl_right = None
 
         #volume variables
         self.vol_start = False
@@ -48,14 +54,21 @@ class VisionHandler:
         self.vol_init = None
 
         # swipe variables
-        self.curr_time_swipe = None
-        self.tracker_x = []
-        self.tracker_y = []
-        self.tracker_z = []
-        self.distance = []
+        self.curr_time_swipe_right = None
+        self.tracker_x_right = []
+        self.tracker_y_right = []
+        self.tracker_z_right = []
+        self.distance_right = []
+
+        self.curr_time_swipe_left = None
+        self.tracker_x_left = []
+        self.tracker_y_left = []
+        self.tracker_z_left = []
+        self.distance_left = []
 
         # stop/go variables
-        self.count_go = 0
+        self.count_go_left = 0
+        self.count_go_right = 0
         self.go = False
         self.go_last_detected = None
 
@@ -75,73 +88,140 @@ class VisionHandler:
         # Queue timeout variable
         self.last_queued = None
 
+        self.last_queued = None
+
     def detect_twirl(self, landmarks, handedness):
-        if detectBasic(landmarks, handedness):
-            self.curr_time_twirl = datetime.now()
-            self.count_twirl = 0
+        if handedness == "L":
+            if detectBasic(landmarks, handedness):
+                self.curr_time_twirl_left = datetime.now()
+                self.count_twirl_left = 0
 
-        if self.curr_time_twirl is not None and detectTwirlEnd(landmarks,
-                                                               handedness) and self.curr_time_twirl + timedelta(
-                seconds=2) > datetime.now():
-            self.count_twirl += 1
+            if self.curr_time_twirl_left is not None and detectTwirlEnd(landmarks,
+                                                                handedness) and self.curr_time_twirl_left + timedelta(
+                    seconds=2) > datetime.now():
+                self.count_twirl_left += 1
 
-        if self.count_twirl > 15:
-            self.curr_gesture = "twirl"
-            self.curr_time_twirl = None
-            self.count_twirl = 0
+            if self.count_twirl_left > 15:
+                self.curr_gesture = "twirl"
+                self.curr_time_twirl_left = None
+                self.count_twirl_left = 0
+        if handedness == "R":
+            if detectBasic(landmarks, handedness):
+                self.curr_time_twirl_right = datetime.now()
+                self.count_twirl_right = 0
+
+            if self.curr_time_twirl_right is not None and detectTwirlEnd(landmarks,
+                                                                handedness) and self.curr_time_twirl_right + timedelta(
+                    seconds=2) > datetime.now():
+                self.count_twirl_right += 1
+
+            if self.count_twirl_right > 15:
+                self.curr_gesture = "twirl"
+                self.curr_time_twirl_right = None
+                self.count_twirl_right = 0
+
 
     def detect_stop_go(self, landmarks, handedness):
-        if detectClosed(landmarks, handedness):
-            self.count_go += 1
-        else:
-            self.count_go = 0
 
-        if self.count_go > 10 and (self.go_last_detected is None or self.go_last_detected + timedelta(seconds = 5) < datetime.now()):
+        if (handedness == "R"):
+            if detectClosed(landmarks, handedness):
+                self.count_go_right += 1
+            else:
+                self.count_go_right = 0
+        elif (handedness == "L"):
+            if detectClosed(landmarks, handedness):
+                self.count_go_left += 1
+            else:
+                self.count_go_left = 0
+
+        if (self.count_go_left > 10 or self.count_go_right > 10) and (self.go_last_detected is None or self.go_last_detected + timedelta(seconds = 5) < datetime.now()):
             self.go = not self.go
             if self.go: self.curr_gesture = "stop"
             else: self.curr_gesture = "go"
             self.go_last_detected = datetime.now()
-            self.count_go = 0
+            self.count_go_left, self.count_go_right = 0, 0
 
     def detect_swipe(self, landmarks, handedness):
-        if self.curr_time_swipe is not None and datetime.now() > self.curr_time_swipe + timedelta(seconds=3):
-            self.curr_time_swipe = None
-            self.tracker_x = []
-            self.tracker_y = []
-            self.tracker_z = []
-            self.distance = []
-        else:
-            if detectSideways(landmarks, handedness):
-                if len(self.tracker_x) == 0:
-                    self.curr_time_swipe = datetime.now()
-                self.tracker_x.append(landmarks.landmark[8].x)
-                self.tracker_y.append(landmarks.landmark[8].y)
-                self.tracker_z.append(landmarks.landmark[8].z)
+        if handedness == "R":
+            if self.curr_time_swipe_right is not None and datetime.now() > self.curr_time_swipe_right + timedelta(seconds=3):
+                self.curr_time_swipe_right = None
+                self.tracker_x_right = []
+                self.tracker_y_right = []
+                self.tracker_z_right = []
+                self.distance_right = []
+            else:
+                if detectSideways(landmarks, handedness):
+                    if len(self.tracker_x_right) == 0:
+                        self.curr_time_swipe_right = datetime.now()
+                    self.tracker_x_right.append(landmarks.landmark[8].x)
+                    self.tracker_y_right.append(landmarks.landmark[8].y)
+                    self.tracker_z_right.append(landmarks.landmark[8].z)
 
-                # Compute the Euclidean distance between two landmarks
-                distance = euclideanDistance(landmarks.landmark[12], landmarks.landmark[0])
-                self.distance.append(distance)
+                    # Compute the Euclidean distance between two landmarks
+                    distance_right = euclideanDistance(landmarks.landmark[12], landmarks.landmark[0])
+                    self.distance_right.append(distance_right)
 
-                vari = variance(self.tracker_y)
+                    vari_right = variance(self.tracker_y_right)
 
-                # a, b = np.polyfit(x, y, 1)
-                x = np.array(self.tracker_x)
-                y = np.array(self.tracker_y)
-                A = np.vstack([x, np.ones(len(x))]).T
-                a, b = np.linalg.lstsq(A, y, rcond=None)[0]
+                    # a, b = np.polyfit(x, y, 1)
+                    x_right = np.array(self.tracker_x_right)
+                    y_right = np.array(self.tracker_y_right)
+                    A_right = np.vstack([x_right, np.ones(len(x_right))]).T
+                    a_right, b_right = np.linalg.lstsq(A_right, y_right, rcond=None)[0]
 
-                mean_distance = np.mean(self.distance)
+                    mean_distance_right = np.mean(self.distance_right)
 
-                if abs(np.max(self.tracker_x) - np.min(self.tracker_x)) >= 1.5 * mean_distance and vari < .002 and abs(a) < .15:
-                    if np.sum(self.tracker_x[0:int(len(self.tracker_x) / 2)]) < np.sum(self.tracker_x[int(len(self.tracker_x) / 2):]):
-                        self.curr_gesture = "swipe_left"
-                    else:
-                        self.curr_gesture = "swipe_right"
-                    self.tracker_x = []
-                    self.tracker_y = []
-                    self.tracker_z = []
-                    self.distance = []
-                    vari, x, y, a, b, mean_distance, self.curr_time_swipe = None, None, None, None, None, None, None
+                    if abs(np.max(self.tracker_x_right) - np.min(self.tracker_x_right)) >= 1.5 * mean_distance_right and vari_right < .002 and abs(a_right) < .15:
+                        if np.sum(self.tracker_x_right[0:int(len(self.tracker_x_right) / 2)]) < np.sum(self.tracker_x_right[int(len(self.tracker_x_right) / 2):]):
+                            self.curr_gesture = "swipe_left"
+                        else:
+                            self.curr_gesture = "swipe_right"
+                        print("swiped")
+                        self.tracker_x_right = []
+                        self.tracker_y_right = []
+                        self.tracker_z_right = []
+                        self.distance_right = []
+                        vari_right, x_right, y_right, a_right, b_right, mean_distance_right, self.curr_time_swipe = None, None, None, None, None, None, None
+        if handedness == "L":
+            if self.curr_time_swipe_left is not None and datetime.now() > self.curr_time_swipe_left + timedelta(seconds=3):
+                self.curr_time_swipe_left = None
+                self.tracker_x_left = []
+                self.tracker_y_left = []
+                self.tracker_z_left = []
+                self.distance_left = []
+            else:
+                if detectSideways(landmarks, handedness):
+                    if len(self.tracker_x_left) == 0:
+                        self.curr_time_swipe_left = datetime.now()
+                    self.tracker_x_left.append(landmarks.landmark[8].x)
+                    self.tracker_y_left.append(landmarks.landmark[8].y)
+                    self.tracker_z_left.append(landmarks.landmark[8].z)
+
+                    # Compute the Euclidean distance between two landmarks
+                    distance_left = euclideanDistance(landmarks.landmark[12], landmarks.landmark[0])
+                    self.distance_left.append(distance_left)
+
+                    vari_left = variance(self.tracker_y_left)
+
+                    # a, b = np.polyfit(x, y, 1)
+                    x_left = np.array(self.tracker_x_left)
+                    y_left = np.array(self.tracker_y_left)
+                    A_left = np.vstack([x_left, np.ones(len(x_left))]).T
+                    a_left, b_left = np.linalg.lstsq(A_left, y_left, rcond=None)[0]
+
+                    mean_distance_left = np.mean(self.distance_left)
+
+                    if abs(np.max(self.tracker_x_left) - np.min(self.tracker_x_left)) >= 1.5 * mean_distance_left and vari_left < .002 and abs(a_left) < .15:
+                        if np.sum(self.tracker_x_left[0:int(len(self.tracker_x_left) / 2)]) < np.sum(self.tracker_x_left[int(len(self.tracker_x_left) / 2):]):
+                            self.curr_gesture = "swipe_left"
+                        else:
+                            self.curr_gesture = "swipe_right"
+                        print("swiped")
+                        self.tracker_x_left = []
+                        self.tracker_y_left = []
+                        self.tracker_z_left = []
+                        self.distance_left = []
+                        vari_left, x_left, y_left, a_left, b_left, mean_distance_left, self.curr_time_swipe = None, None, None, None, None, None, None
 
     def detect_xy_control(self, hand_landmarks, handedness):
         gestureCorrect = detectBasic(hand_landmarks, handedness)
@@ -193,6 +273,10 @@ class VisionHandler:
 
                 if self.curr_gesture is not None and self.curr_gesture != "":
                     self.communication_queue.put(("/gesture", self.curr_gesture))
+<<<<<<< Updated upstream
+=======
+                    print(self.curr_gesture)
+>>>>>>> Stashed changes
                     self.curr_gesture = None
                     self.last_queued = datetime.now()
 
@@ -203,15 +287,20 @@ class VisionHandler:
                 image_rows, image_cols, _ = image.shape
 
                 # detect gestures
+<<<<<<< Updated upstream
                 if not(self.vol_start):
                     self.vol_origin = None
                     self.detect_twirl(landmarks, "L")
                     self.detect_stop_go(landmarks, "L")
                     self.detect_swipe(landmarks, "L")
+=======
+
+>>>>>>> Stashed changes
                 if (self.last_queued is None or datetime.now() > self.last_queued + timedelta(seconds = 2)):
                     self.detect_twirl(landmarks, "L")
                     self.detect_stop_go(landmarks, "L")
                     self.detect_swipe(landmarks, "L")
+<<<<<<< Updated upstream
 
                 if self.vol_start:
                     if self.vol_init is None:
@@ -219,9 +308,12 @@ class VisionHandler:
                     self.vol_init = 0
                     self.detect_xy_control(landmarks, "L")
                     self.detect_twirl(landmarks, "L")
+=======
+>>>>>>> Stashed changes
 
                 if self.curr_gesture is not None and self.curr_gesture != "":
                     self.communication_queue.put(("/gesture", self.curr_gesture))
+                    print(self.curr_gesture)
                     self.curr_gesture = None
                     self.last_queued = datetime.now()
 
