@@ -23,9 +23,9 @@ def buffered_smooth(buffer_x, buffer_y, buffer_z, coordinates):
 
     # Keep only the most recent BUFFER_SIZE elements
     # Buffer handling: To implement a sliding window approach
-    buffer_x = buffer_x[-BUFFER_SIZE:]
-    buffer_y = buffer_y[-BUFFER_SIZE:]
-    buffer_z = buffer_z[-BUFFER_SIZE:]
+    # buffer_x = buffer_x[-BUFFER_SIZE:]
+    # buffer_y = buffer_y[-BUFFER_SIZE:]
+    # buffer_z = buffer_z[-BUFFER_SIZE:]
 
     # adaptive smoothening approach, need to define threshold based on data
     # alpha_x = calculate_alpha(buffer_x, THRESHOLD)
@@ -33,9 +33,9 @@ def buffered_smooth(buffer_x, buffer_y, buffer_z, coordinates):
     # alpha_z = calculate_alpha(buffer_z, THRESHOLD)
 
     if len(buffer_x) >= BUFFER_SIZE:
-        x = exponential_moving_average(buffer_x, 0.6)
-        y = exponential_moving_average(buffer_y, 0.6)
-        z = exponential_moving_average(buffer_z, 0.6)
+        x = exponential_moving_average(buffer_x, 0.2)
+        y = exponential_moving_average(buffer_y, 0.2)
+        z = exponential_moving_average(buffer_z, 0.2)
         return float(x), float(y), float(z)
     else:
         return None
