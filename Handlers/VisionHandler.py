@@ -12,11 +12,7 @@ from Helpers.HandGestures import *
 
 
 class VisionHandler:
-<<<<<<< Updated upstream
     def __init__(self, device=4, cap_width=960, cap_height=540, use_static_image_mode=True,
-=======
-    def __init__(self, device=0, cap_width=960, cap_height=540, use_static_image_mode=True,
->>>>>>> Stashed changes
                  min_detection_confidence=0.7, min_tracking_confidence=0.5, communication_queue: Queue = Queue()):
         self.cap = cv.VideoCapture(device)
         if not self.cap.isOpened():
@@ -75,7 +71,7 @@ class VisionHandler:
         # gesture variables
         self.prev_gesture = ""
         self.curr_gesture = ""
-        self.if_tracking = False
+        self.if_tracking = False # set live tracking on/off
 
         # Noise filter variables
         self.head_x = []
@@ -273,10 +269,6 @@ class VisionHandler:
 
                 if self.curr_gesture is not None and self.curr_gesture != "":
                     self.communication_queue.put(("/gesture", self.curr_gesture))
-<<<<<<< Updated upstream
-=======
-                    print(self.curr_gesture)
->>>>>>> Stashed changes
                     self.curr_gesture = None
                     self.last_queued = datetime.now()
 
@@ -287,20 +279,11 @@ class VisionHandler:
                 image_rows, image_cols, _ = image.shape
 
                 # detect gestures
-<<<<<<< Updated upstream
-                if not(self.vol_start):
+                if not(self.vol_start) and (self.last_queued is None or datetime.now() > self.last_queued + timedelta(seconds = 2)):
                     self.vol_origin = None
                     self.detect_twirl(landmarks, "L")
                     self.detect_stop_go(landmarks, "L")
                     self.detect_swipe(landmarks, "L")
-=======
-
->>>>>>> Stashed changes
-                if (self.last_queued is None or datetime.now() > self.last_queued + timedelta(seconds = 2)):
-                    self.detect_twirl(landmarks, "L")
-                    self.detect_stop_go(landmarks, "L")
-                    self.detect_swipe(landmarks, "L")
-<<<<<<< Updated upstream
 
                 if self.vol_start:
                     if self.vol_init is None:
@@ -308,8 +291,6 @@ class VisionHandler:
                     self.vol_init = 0
                     self.detect_xy_control(landmarks, "L")
                     self.detect_twirl(landmarks, "L")
-=======
->>>>>>> Stashed changes
 
                 if self.curr_gesture is not None and self.curr_gesture != "":
                     self.communication_queue.put(("/gesture", self.curr_gesture))
