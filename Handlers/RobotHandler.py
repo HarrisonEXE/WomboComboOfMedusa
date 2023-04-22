@@ -4,7 +4,7 @@ import numpy as np
 import serial
 from xarm import XArmAPI
 from queue import Queue
-from threading import Thread
+from threading import Thread, Event
 from Helpers import positions
 from Helpers.Utils import createRandList, delay
 from Helpers.TrajectoryGeneration import fifth_poly, fifth_poly2, spline_poly
@@ -32,6 +32,7 @@ class RobotHandler:
         self.drumvel = 3
         self.drumtrajs = self.setDrummingTraj()
         self.playDrums = False
+        self.playDrums_event = None
 
         self.lightQ = Queue()
         self.lightThread = Thread(
@@ -88,11 +89,11 @@ class RobotHandler:
         """
         Initial Positions for tracking mode
         """
-        IPt0 = [-0.25, 0, -2, 126.5, 0, 51.73, -45]
-        IPt1 = [2.62, 0, 0, 127.1, 0, 50.13, -45]
-        IPt2 = [1.3, 0, 0, 120, 0, 54.2, -45]
-        IPt3 = [-1.4, 56.8, 0, 185, -15, 44.5, -45]
-        IPt4 = [-1.8, 0, 0, 120, 0, 50.65, -45]
+        IPt0 = [0, -51.0, -2, 95.0, 0, 10.1, -45]
+        IPt1 = [-3.5, -51.6, -7.5, 93.3, -3, 12., -45]
+        IPt2 = [40.0, 10, 0, 118, 0, 37.5, -45]
+        IPt3 = [-1.4, 56.8, 0, 180, -15, 44.5, -45]
+        IPt4 = [-30, 20, 0, 135, 0, 35.5, -45]
         return [IPt0, IPt1, IPt2, IPt3, IPt4]
 
     def setupRobots(self):
@@ -299,15 +300,19 @@ class RobotHandler:
     def drummer2(self, arms):
         t1 = time.time()
         t2 = time.time()
+
+        # Create an Event object
+        self.playDrums_event = Event()
+
         while True:
             if self.playDrums:
+
                 if arms[0] == 5:
                     traj2 = self.drumtrajs[str(self.drumvel)][0]
                     traj4 = self.drumtrajs[str(self.drumvel)][1]
                     traj6 = self.drumtrajs[str(self.drumvel)][2]
                     if time.time() - t1 >= 2:
                         self.drumbot(traj2, traj4, traj6, arms[0])
-                        print("drum vel ", self.drumvel)
                         t1 = time.time()
 
                 if arms[1] == 6:
@@ -316,8 +321,11 @@ class RobotHandler:
                     traj6 = self.drumtrajs[str(self.drumvel + 10)][2]
                     if time.time() - t2 >= 2:
                         self.drumbot(traj2, traj4, traj6, arms[1])
-                        print("drum vel ", self.drumvel)
                         t2 = time.time()
+
+            else:
+                self.playDrums_event.clear()
+                self.playDrums_event.wait()
 
     def drumController(self, queue):
         # formerly known as drummer function
@@ -326,9 +334,11 @@ class RobotHandler:
             if data == "up":
                 if self.drumvel < 4:
                     self.drumvel += 1
+                    print("drum vel increased to", self.drumvel)
             elif data == "down":
                 if self.drumvel > 1:
                     self.drumvel -= 1
+                    print("drum vel decreased to", self.drumvel)
 
     # --------------- Controller Helpers --------------- #
     def trackbot(self, num, data):
@@ -343,46 +353,56 @@ class RobotHandler:
             self.gotoPose(num, newPos)
             print("tracking position set")
         else:
-            head = data[:3]
-            shoulder = data[3:]
+            head = {'x': float(data[0]), 'y': float(data[1]), 'z': float(data[2])}
+            shoulder = {'x': float(data[3]), 'y': float(data[4]), 'z': float(data[5])}
 
-            if self.offset_counter < 100:
+            if self.offset_counter < 150:
                 if self.offset_counter == 0:
                     self.temp_time_tracker = time.time()
-                self.tracking_offsets[0] += float(head[0])
-                self.tracking_offsets[1] += float(head[1])
-                self.tracking_offsets[2] += float(head[2])
-                self.tracking_offsets[3] += float(shoulder[0])
-                self.tracking_offsets[4] += float(shoulder[1])
-                self.tracking_offsets[5] += float(shoulder[2])
+                self.tracking_offsets[0] += head['x']
+                self.tracking_offsets[1] += head['y']
+                self.tracking_offsets[2] += head['z']
+                self.tracking_offsets[3] += shoulder['x']
+                self.tracking_offsets[4] += shoulder['y']
+                self.tracking_offsets[5] += shoulder['z']
                 self.offset_counter += 1
-            elif self.offset_counter == 100:
-                self.tracking_offsets = [x / 100 for x in self.tracking_offsets]
+            elif self.offset_counter == 150:
+                self.tracking_offsets = [x / 150 for x in self.tracking_offsets]
                 self.offset_counter += 1
                 self.temp_time_tracker = time.time() - self.temp_time_tracker
                 print("Time to get offsets: ", self.temp_time_tracker, "secs")
             else:
-                offset_head = [
-                    float(head[0]) - self.tracking_offsets[0],
-                    float(head[1]) - self.tracking_offsets[1],
-                    float(head[2]) - self.tracking_offsets[2]
-                ]
-                offset_shoulder = [
-                    float(shoulder[0]) - self.tracking_offsets[3],
-                    float(shoulder[1]) - self.tracking_offsets[4],
-                    float(shoulder[2]) - self.tracking_offsets[5]
-                ]
+                offset_head = {
+                    'x': head['x'] - self.tracking_offsets[0],
+                    'y': head['y'] - self.tracking_offsets[1],
+                    'z': head['z'] - self.tracking_offsets[2]
+                }
+                offset_shoulder = {
+                    'x': shoulder['x'] - self.tracking_offsets[3],
+                    'y': shoulder['y'] - self.tracking_offsets[4],
+                    'z': shoulder['z'] - self.tracking_offsets[5]
+                }
 
                 save_vision_data(f'logs/vision_data_arm_{num}.csv', time.time(),
-                                 smoothed_values=[*offset_head, *offset_shoulder])
+                                 smoothed_values=[*offset_head.values(), *offset_shoulder.values()])
 
                 # TODO: add individual mappings for each arm and add more joints
-                j4 = self.apply_vision_mapping(num, joint=3, value=offset_head[1])
-                j5 = self.apply_vision_mapping(num, joint=4, value=offset_head[0])
+                j1 = self.apply_vision_mapping(num, joint=0, value=offset_head['x'])
+                j2 = self.apply_vision_mapping(num, joint=1, value=offset_head['y'])
+                j3 = self.apply_vision_mapping(num, joint=2, value=offset_head['x'])
+                j4 = self.apply_vision_mapping(num, joint=3, value=offset_head['y'])
+                j5 = self.apply_vision_mapping(num, joint=4, value=offset_head['x'])
+                j6 = self.apply_vision_mapping(num, joint=5, value=offset_head['x'])
+                # j7 = self.apply_vision_mapping(num, joint=6, value=offset_head['x'])
 
                 p = self.getAngles(num)
+                p[0] = j1
+                p[1] = j2
+                p[2] = j3
                 p[3] = j4
                 p[4] = j5
+                p[5] = j6
+                # p[7] = j7
 
                 self.setAngles(num, p)
 
@@ -541,13 +561,32 @@ class RobotHandler:
         """
         return: {arm_num : {joint_num: {'input_range': [], 'output_range':[]}}}
         """
-        # TODO: 1. Add more arms here
         # TODO: 2. Add more joint mappings
         # TODO: 3. Measure max range of vision data values
         return {
+            0: {
+                0: {'input_range': [-0.5, 0.5], 'output_range': [22, -22]},
+                2: {'input_range': [-0.5, 0.5], 'output_range': [78, -82]},
+                4: {'input_range': [-0.5, 0.5], 'output_range': [60, -60]},
+            },
+            1: {
+                0: {'input_range': [-0.5, 0.5], 'output_range': [25, -32]},
+                2: {'input_range': [-0.5, 0.5], 'output_range': [45, -60]},
+                4: {'input_range': [-0.5, 0.5], 'output_range': [-66, 60]},
+            },
+            2: {
+                1: {'input_range': [-0.5, 0.5], 'output_range': [-40, 60]},
+                3: {'input_range': [-0.5, 0.5], 'output_range': [50, 186]},
+                5: {'input_range': [-0.5, 0.5], 'output_range': [-13, 88]},
+            },
             3: {
-                3: {'input_range': [-0.75, 0.75], 'output_range': [150, 210]},
-                4: {'input_range': [-0.75, 0.75], 'output_range': [30, -60]},
+                3: {'input_range': [-0.5, 0.5], 'output_range': [150, 210]},
+                4: {'input_range': [-0.5, 0.5], 'output_range': [30, -60]},
+            },
+            4: {
+                1: {'input_range': [-0.5, 0.5], 'output_range': [-30, 70]},
+                3: {'input_range': [-0.5, 0.5], 'output_range': [60, 210]},
+                5: {'input_range': [-0.5, 0.5], 'output_range': [-13, 82]},
             },
         }
 
@@ -562,3 +601,4 @@ class RobotHandler:
 
     def switch_drum_state(self):
         self.playDrums = not self.playDrums
+        self.playDrums_event.set()
