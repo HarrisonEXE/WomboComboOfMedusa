@@ -7,12 +7,13 @@ from Demos.VisionTrackerDemo import VisionTrackerDemo
 from Handlers.RTPMidiHandler import RtpMidi
 from pymidi import server
 
+
 midiQueue = Queue()
 
 
 class Performance:
     def __init__(self, robotHandler, is_lab_work=True):
-        self.robotHandler = robotHandler
+        self.robotHandler = robotHandler(strumStart=False)
 
         self.voiceDemo = HaltableVoiceDemo(robotHandler, is_lab_work)
         self.micDemo = HaltableMicDemo(

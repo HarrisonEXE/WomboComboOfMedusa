@@ -12,9 +12,10 @@ from Helpers.DataFilters import save_joint_data, save_vision_data
 
 
 class RobotHandler:
-    def __init__(self, is_lab_work=True):
+    def __init__(self, is_lab_work=True, strumStart=True):
         self.is_lab_work = is_lab_work
         self.lightMode = True
+        self.strumStart = strumStart
         self.arms = []
         self.strumD = 30
         self.speed = 0.25
@@ -118,8 +119,12 @@ class RobotHandler:
             self.arms[i].clean_error()
             self.arms[i].set_mode(0)
             self.arms[i].set_state(0)
-            self.arms[i].set_servo_angle(angle=self.IP[i], wait=False, speed=20, acceleration=0.25,
-                                         is_radian=False)
+            if self.strumStart:
+                self.arms[i].set_servo_angle(angle=self.IP[i], wait=False, speed=20, acceleration=0.25,
+                                             is_radian=False)
+            else:
+                self.arms[i].set_servo_angle(angle=[0.0, 0.0, 0.0, 1.57, 0.0, 0, 0.0], wait=False, speed=0.4,
+                                             acceleration=0.25, is_radian=True)
         print(f"{len(self.arms)} arms connected.")
 
     def startThreads(self):
@@ -234,37 +239,61 @@ class RobotHandler:
 
     def setDrummingTraj(self):
 
-        traj2_4 = spline_poly(self.IP[5][1], self.IP[7][1] + 1, self.IP[5][1], .4, .08, 0, 0, 32, .5, 0)
-        traj4_4 = spline_poly(self.IP[5][3], self.IP[7][3] + 1, self.IP[5][3], .3, .08, .13, .1, 0, .5, 0)
-        traj6_4 = spline_poly(self.IP[5][5], self.IP[7][5] + 1, self.IP[5][5], .2, .08, .35, .1, 32, .5, 0)
+        traj2_4 = spline_poly(
+            self.IP[5][1], self.IP[7][1] + 1, self.IP[5][1], .4, .08, 0, 0, 32, .5, 0)
+        traj4_4 = spline_poly(
+            self.IP[5][3], self.IP[7][3] + 1, self.IP[5][3], .3, .08, .13, .1, 0, .5, 0)
+        traj6_4 = spline_poly(
+            self.IP[5][5], self.IP[7][5] + 1, self.IP[5][5], .2, .08, .35, .1, 32, .5, 0)
 
-        traj2_3 = spline_poly(self.IP[5][1], self.IP[7][1] - 2, self.IP[5][1], .5, .08, 0, 0, 24, .5, 0)
-        traj4_3 = spline_poly(self.IP[5][3], self.IP[7][3] - 2, self.IP[5][3], .4, .08, .13, .1, 0, .5, 0)
-        traj6_3 = spline_poly(self.IP[5][5], self.IP[7][5] - 2, self.IP[5][5], .3, .08, .35, .1, 24, .5, 0)
+        traj2_3 = spline_poly(
+            self.IP[5][1], self.IP[7][1] - 2, self.IP[5][1], .5, .08, 0, 0, 24, .5, 0)
+        traj4_3 = spline_poly(
+            self.IP[5][3], self.IP[7][3] - 2, self.IP[5][3], .4, .08, .13, .1, 0, .5, 0)
+        traj6_3 = spline_poly(
+            self.IP[5][5], self.IP[7][5] - 2, self.IP[5][5], .3, .08, .35, .1, 24, .5, 0)
 
-        traj2_2 = spline_poly(self.IP[5][1], self.IP[7][1] - 4, self.IP[5][1], .6, .08, 0, 0, 16, .5, 0)
-        traj4_2 = spline_poly(self.IP[5][3], self.IP[7][3] - 4, self.IP[5][3], .5, .08, .13, .1, 0, .5, 0)
-        traj6_2 = spline_poly(self.IP[5][5], self.IP[7][5] - 4, self.IP[5][5], .4, .08, .35, .1, 16, .5, 0)
+        traj2_2 = spline_poly(
+            self.IP[5][1], self.IP[7][1] - 4, self.IP[5][1], .6, .08, 0, 0, 16, .5, 0)
+        traj4_2 = spline_poly(
+            self.IP[5][3], self.IP[7][3] - 4, self.IP[5][3], .5, .08, .13, .1, 0, .5, 0)
+        traj6_2 = spline_poly(
+            self.IP[5][5], self.IP[7][5] - 4, self.IP[5][5], .4, .08, .35, .1, 16, .5, 0)
 
-        traj2_1 = spline_poly(self.IP[5][1], self.IP[7][1] - 6, self.IP[5][1], .7, .08, 0, 0, 8, .5, 0)
-        traj4_1 = spline_poly(self.IP[5][3], self.IP[7][3] - 6, self.IP[5][3], .6, .08, .13, .1, 0, .5, 0)
-        traj6_1 = spline_poly(self.IP[5][5], self.IP[7][5] - 6, self.IP[5][5], .5, .08, .35, .1, 8, .5, 0)
+        traj2_1 = spline_poly(
+            self.IP[5][1], self.IP[7][1] - 6, self.IP[5][1], .7, .08, 0, 0, 8, .5, 0)
+        traj4_1 = spline_poly(
+            self.IP[5][3], self.IP[7][3] - 6, self.IP[5][3], .6, .08, .13, .1, 0, .5, 0)
+        traj6_1 = spline_poly(
+            self.IP[5][5], self.IP[7][5] - 6, self.IP[5][5], .5, .08, .35, .1, 8, .5, 0)
 
-        traj2_14 = spline_poly(self.IP[5][1], self.IP[7][1] + 6, self.IP[5][1], .4, .08, 0, 0, 32, .5, 0)
-        traj4_14 = spline_poly(self.IP[5][3], self.IP[7][3] + 6, self.IP[5][3], .3, .08, .13, .1, 0, .5, 0)
-        traj6_14 = spline_poly(self.IP[5][5], self.IP[7][5] + 6, self.IP[5][5], .2, .08, .35, .1, 32, .5, 0)
+        traj2_14 = spline_poly(
+            self.IP[5][1], self.IP[7][1] + 6, self.IP[5][1], .4, .08, 0, 0, 32, .5, 0)
+        traj4_14 = spline_poly(
+            self.IP[5][3], self.IP[7][3] + 6, self.IP[5][3], .3, .08, .13, .1, 0, .5, 0)
+        traj6_14 = spline_poly(
+            self.IP[5][5], self.IP[7][5] + 6, self.IP[5][5], .2, .08, .35, .1, 32, .5, 0)
 
-        traj2_13 = spline_poly(self.IP[5][1], self.IP[7][1] - 2, self.IP[5][1], .5, .08, 0, 0, 24, .5, 0)
-        traj4_13 = spline_poly(self.IP[5][3], self.IP[7][3] - 2, self.IP[5][3], .4, .08, .13, .1, 0, .5, 0)
-        traj6_13 = spline_poly(self.IP[5][5], self.IP[7][5] - 2, self.IP[5][5], .3, .08, .35, .1, 24, .5, 0)
+        traj2_13 = spline_poly(
+            self.IP[5][1], self.IP[7][1] - 2, self.IP[5][1], .5, .08, 0, 0, 24, .5, 0)
+        traj4_13 = spline_poly(
+            self.IP[5][3], self.IP[7][3] - 2, self.IP[5][3], .4, .08, .13, .1, 0, .5, 0)
+        traj6_13 = spline_poly(
+            self.IP[5][5], self.IP[7][5] - 2, self.IP[5][5], .3, .08, .35, .1, 24, .5, 0)
 
-        traj2_12 = spline_poly(self.IP[5][1], self.IP[7][1] - 4, self.IP[5][1], .6, .08, 0, 0, 16, .5, 0)
-        traj4_12 = spline_poly(self.IP[5][3], self.IP[7][3] - 4, self.IP[5][3], .5, .08, .13, .1, 0, .5, 0)
-        traj6_12 = spline_poly(self.IP[5][5], self.IP[7][5] - 4, self.IP[5][5], .4, .08, .35, .1, 16, .5, 0)
+        traj2_12 = spline_poly(
+            self.IP[5][1], self.IP[7][1] - 4, self.IP[5][1], .6, .08, 0, 0, 16, .5, 0)
+        traj4_12 = spline_poly(
+            self.IP[5][3], self.IP[7][3] - 4, self.IP[5][3], .5, .08, .13, .1, 0, .5, 0)
+        traj6_12 = spline_poly(
+            self.IP[5][5], self.IP[7][5] - 4, self.IP[5][5], .4, .08, .35, .1, 16, .5, 0)
 
-        traj2_11 = spline_poly(self.IP[5][1], self.IP[7][1] - 6, self.IP[5][1], .7, .08, 0, 0, 8, .5, 0)
-        traj4_11 = spline_poly(self.IP[5][3], self.IP[7][3] - 6, self.IP[5][3], .6, .08, .13, .1, 0, .5, 0)
-        traj6_11 = spline_poly(self.IP[5][5], self.IP[7][5] - 6, self.IP[5][5], .5, .08, .35, .1, 8, .5, 0)
+        traj2_11 = spline_poly(
+            self.IP[5][1], self.IP[7][1] - 6, self.IP[5][1], .7, .08, 0, 0, 8, .5, 0)
+        traj4_11 = spline_poly(
+            self.IP[5][3], self.IP[7][3] - 6, self.IP[5][3], .6, .08, .13, .1, 0, .5, 0)
+        traj6_11 = spline_poly(
+            self.IP[5][5], self.IP[7][5] - 6, self.IP[5][5], .5, .08, .35, .1, 8, .5, 0)
 
         return {
             '1': [traj2_1, traj4_1, traj6_1],
@@ -330,7 +359,8 @@ class RobotHandler:
 
     # --------------- Controller Helpers --------------- #
     def trackbot(self, num, data):
-        save_joint_data(f'logs/joint_data_arm_{num}.csv', time.time(), self.getAngles(num))
+        save_joint_data(
+            f'logs/joint_data_arm_{num}.csv', time.time(), self.getAngles(num))
 
         if self.reset_discontinuity[num]:
             self.reset_discontinuity[num] = False
@@ -355,7 +385,8 @@ class RobotHandler:
                 self.tracking_offsets[5] += float(shoulder[2])
                 self.offset_counter += 1
             elif self.offset_counter == 100:
-                self.tracking_offsets = [x / 100 for x in self.tracking_offsets]
+                self.tracking_offsets = [
+                    x / 100 for x in self.tracking_offsets]
                 self.offset_counter += 1
                 self.temp_time_tracker = time.time() - self.temp_time_tracker
                 print("Time to get offsets: ", self.temp_time_tracker, "secs")
@@ -375,8 +406,10 @@ class RobotHandler:
                                  smoothed_values=[*offset_head, *offset_shoulder])
 
                 # TODO: add individual mappings for each arm and add more joints
-                j4 = self.apply_vision_mapping(num, joint=3, value=offset_head[1])
-                j5 = self.apply_vision_mapping(num, joint=4, value=offset_head[0])
+                j4 = self.apply_vision_mapping(
+                    num, joint=3, value=offset_head[1])
+                j5 = self.apply_vision_mapping(
+                    num, joint=4, value=offset_head[0])
 
                 p = self.getAngles(num)
                 p[3] = j4
@@ -451,7 +484,8 @@ class RobotHandler:
             jointangles = [0, traj2[i], 0, traj4[i], 0, traj6[i], 0]
             # jointangles = [traj1[i], traj2[i], traj3[i], traj4[i], traj5[i], traj6[i], traj7[i]]
             # print(traj6[i])
-            self.arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
+            self.arms[arm].set_servo_angle_j(
+                angles=jointangles, is_radian=False)
 
             while track_time < initial_time + 0.004:
                 track_time = time.time()
