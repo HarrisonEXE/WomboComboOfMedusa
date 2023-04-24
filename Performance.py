@@ -1,3 +1,4 @@
+from queue import Queue
 from threading import Thread
 import time
 from Demos.Haltable.HaltableMicDemo import HaltableMicDemo
@@ -5,6 +6,8 @@ from Demos.Haltable.HaltableVoiceDemo import HaltableVoiceDemo
 from Demos.VisionTrackerDemo import VisionTrackerDemo
 from Handlers.RTPMidiHandler import RtpMidi
 from pymidi import server
+
+midiQueue = Queue()
 
 
 class Performance:
@@ -19,8 +22,7 @@ class Performance:
 
         self.mainThread = Thread()
         self.rtpMidi = RtpMidi("xArms", MyHandler(), 5004)
-        print("test")
-        rtp_midi.run()
+        self.midiThread = Thread(target=self.rtp_midi.run())
 
     def runSequence(self):
         # 0:00 ------------------- 1 -
@@ -36,19 +38,22 @@ class Performance:
         self.micDemo.start()
         mainThread = Thread(target=self.micDemo.runDemoThread)
         mainThread.start()
-        # TODO: Kill based on r2pmidi, maybe improvise
-        time.sleep(30)
+        midiQueue.get()
         self.micDemo.kill()
         mainThread.join()
 
-        # TODO: Audio blends into presequence
-
-        # 0:31 - 3:30 ------------ 2 -
-        # Xylophone Mimicking (Audio)
+        # 0:31 - 3:00 ------------ 3 -
+        # Live Tracking then Gestures (Vision)
         # ----------------------------
         mainThread = Thread(target=self.visionTrackerDemo.start)
         mainThread.start()
-        # TODO: Figure out transition to end
+        midiQueue.get()
+        self.visionTrackerDemo.kill()  # TODO: Verify efficacy
+        mainThread.join()
+
+        # 3:01 - 3:30 ------------ 4 -
+        # Hope Dance (Preprogrammed)
+        # ----------------------------
 
         # END--------------------- 2 -
         # Xylophone Mimicking (Audio)
@@ -74,9 +79,8 @@ class MyHandler(server.Handler):
             chn = command.channel
             if chn == 1:  # this means its channel 2!!!!!
                 if command.command == 'note_on':
-                    print("YEYE START")
+                    midiQueue.put(1)
 
             if chn == 2:  # this means its channel 3 !!!!!
                 if command.command == 'note_on':
                     print("DRUMMO")
-                    # dq1.put(1)
