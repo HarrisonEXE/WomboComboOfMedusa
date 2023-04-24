@@ -9,6 +9,7 @@ from Helpers.DataFilters import buffered_smooth, save_vision_data
 from Handlers.DrawingHandler import DrawingHandler
 from Helpers.CvFpsCalc import CvFpsCalc
 from Helpers.HandGestures import *
+from Helpers import VisionResponse
 
 
 class VisionHandler:
@@ -38,6 +39,9 @@ class VisionHandler:
         cv.destroyAllWindows()
 
     def initialize_gesture_detection_state(self):
+        #init gesture response list
+        VisionResponse.init()
+
         # twirl variables
         self.count_twirl_left = 0
         self.curr_time_twirl_left = None
@@ -82,8 +86,6 @@ class VisionHandler:
         self.shoulder_z = []
 
         # Queue timeout variable
-        self.last_queued = None
-
         self.last_queued = None
 
     def detect_twirl(self, landmarks, handedness):

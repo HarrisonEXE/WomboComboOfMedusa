@@ -9,7 +9,7 @@ from Helpers import positions
 from Helpers.Utils import createRandList, delay
 from Helpers.TrajectoryGeneration import fifth_poly, fifth_poly2, spline_poly
 from Helpers.DataFilters import save_joint_data, save_vision_data
-
+from Helpers import VisionResponse
 
 class RobotHandler:
     def __init__(self, is_lab_work=True):
@@ -423,16 +423,24 @@ class RobotHandler:
         if play == 3:  # swipe_left
             poseI = self.getAngles(num)
             poseF = positions.IPc[num]
-            newPos = self.poseToPose(poseI, poseF, 4)
+            #newPos = self.poseToPose(poseI, poseF, 4)
+            newPos = self.poseToPose(poseI, [0,0,0,90,0,0,0],8)
+            swipe_left_response = VisionResponse.make_traj(3)
+            # print(len(swipe_left_response))
+            # # for item in swipe_left_response:
+            # #     print(item[0])
+            # print(swipe_left_response[0][0:20])
             self.gotoPose(num, newPos)
-            self.robomove(num, positions.circletraj[num])
+            self.k_robomove(num, swipe_left_response)
 
         if play == 4:  # swipe_left
             poseI = self.getAngles(num)
             poseF = positions.IPw[num]
-            newPos = self.poseToPose(poseI, poseF, 4)
+            #newPos = self.poseToPose(poseI, poseF, 4)
+            newPos = self.poseToPose(poseI, [0,0,0,90,0,0,0], 8)
+            swipe_right_response = VisionResponse.make_traj(4)
             self.gotoPose(num, newPos)
-            self.robomove(num, positions.wtraj[num])
+            self.k_robomove(num, swipe_right_response)
 
         if play == 5:  # twirl
             poseI = self.getAngles(num)
@@ -602,3 +610,16 @@ class RobotHandler:
     def switch_drum_state(self):
         self.playDrums = not self.playDrums
         self.playDrums_event.set()
+
+    def k_robomove(self, num, trajectory):
+        track_time = time.time()
+        initial_time = time.time()
+        for i in range(len(trajectory[0])):
+            angles = [trajectory[0][i], trajectory[1][i], trajectory[2][i],
+                      trajectory[3][i], trajectory[4][i], trajectory[5][i],
+                      trajectory[6][i]]
+            self.setAngles(num, angles, is_radian=False)
+            while track_time < initial_time + 0.004:
+                track_time = time.time()
+                time.sleep(0.0001)
+            initial_time += 0.004
