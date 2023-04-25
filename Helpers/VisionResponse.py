@@ -17,7 +17,14 @@ hold = [0,0,0,0,0,0,0]
 hold_t = [2,2,2,2,2,2,2]
 
 gesture_info = []
+is_moving = False
 
+hope_3 = [11, 12, 13]
+hope_2 = [14, 15, 16, 17]
+hope_4 = [18, 19, 20, 21]
+hope_0 = [22]
+hope_1 = [23]
+hope_arm_gesture = [hope_0, hope_1, hope_2, hope_3, hope_4]
 def get_gesture_info():
     with open('/home/codmusic/Downloads/MedusaAV/WomboComboOfMedusa/Helpers/vision_response.csv') as csv_db:
         csv_reader = csv.DictReader(csv_db, delimiter=',')
