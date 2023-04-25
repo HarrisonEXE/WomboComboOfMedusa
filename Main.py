@@ -40,7 +40,9 @@ def run_performance():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run Medusa Demo")
-    parser.add_argument("--mode", choices=["demo", "performance"], default="performance", help="Select the mode to run (demo or performance)")
+    parser.add_argument("--mode", choices=["demo", "performance"], default="performance", help="Select the mode to "
+                                                                                               "run (demo or "
+                                                                                               "performance)")
 
     args = parser.parse_args()
 

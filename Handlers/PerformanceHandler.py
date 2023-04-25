@@ -11,7 +11,7 @@ class PerformanceHandler:
 
     def perform(self, phrase):
         prev_note_start = 0
-        multiplier = 2  # Idk why it's 2. It just works.
+        multiplier = 1.5  # Idk why it's 2. It just works.
         now = time.time()
 
         for i in range(len(phrase)):

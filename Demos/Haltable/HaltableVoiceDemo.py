@@ -8,7 +8,7 @@ class HaltableVoiceDemo(IRobotDemo):
         self.name = "Haltable Voice Recognition Demo"
         # Scarlett 2i2 USB: Audio (hw:4,0)
         # USB  Live camera: Audio (hw:2,0)
-        self.micName = "Scarlett 2i2 USB: Audio (hw:4,0)"
+        self.micName = "Scarlett 2i2 USB: Audio (hw:2,0)"
 
     def start(self):
         self.announceStart()
@@ -18,14 +18,14 @@ class HaltableVoiceDemo(IRobotDemo):
         return self.listen(r)
 
     def listen(self, r):
-        # print(sr.Microphone.list_microphone_names())
+        print(sr.Microphone.list_microphone_names())
         micIndex = sr.Microphone.list_microphone_names().index(self.micName)
         mic = sr.Microphone(micIndex)  # set mic
 
         with mic as source:
             while self.running:
                 print("Speak a command.")
-                r.adjust_for_ambient_noise(source, duration=0.2)
+                #r.adjust_for_ambient_noise(source, duration=0.2)
                 audio = r.listen(source)
 
                 response = {
@@ -48,7 +48,7 @@ class HaltableVoiceDemo(IRobotDemo):
                 text = text.lower()
 
                 print(f"Detected phrase: {text}")
-                if "hey medusa" in text:
+                if "wake up" or "up" in text:
                     print("You have angered Medusa")
                     self.robotHandler.turnOnLive()
                     return True
