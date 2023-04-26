@@ -259,7 +259,7 @@ class VisionHandler:
 
             self.drawingHandler.draw_styled_landmarks(image, results)
 
-            if not self.if_tracking and not VisionResponse.is_moving:
+            if not VisionResponse.is_moving:
 
                 if results.right_hand_landmarks is not None:
                     landmarks = results.right_hand_landmarks
@@ -271,8 +271,13 @@ class VisionHandler:
                     self.detect_swipe(landmarks, "R")
 
                     if self.curr_gesture is not None and self.curr_gesture != "":
-                        self.communication_queue.put(("/gesture", self.curr_gesture))
-                        self.curr_gesture = None
+                        if not self.if_tracking:
+                            self.communication_queue.put(("/gesture", self.curr_gesture))
+                            self.curr_gesture = None
+
+                        if self.if_tracking and (self.curr_gesture == 'up' or self.curr_gesture == 'down'):
+                            self.communication_queue.put(("/gesture", self.curr_gesture))
+                            self.curr_gesture = None
 
                     cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
 
@@ -295,9 +300,13 @@ class VisionHandler:
                         self.detect_twirl(landmarks, "L")
 
                     if self.curr_gesture is not None and self.curr_gesture != "":
-                        self.communication_queue.put(("/gesture", self.curr_gesture))
-                        # print(self.curr_gesture)
-                        self.curr_gesture = None
+                        if not self.if_tracking:
+                            self.communication_queue.put(("/gesture", self.curr_gesture))
+                            self.curr_gesture = None
+
+                        if self.if_tracking and (self.curr_gesture == 'up' or self.curr_gesture == 'down'):
+                            self.communication_queue.put(("/gesture", self.curr_gesture))
+                            self.curr_gesture = None
 
                     cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
 

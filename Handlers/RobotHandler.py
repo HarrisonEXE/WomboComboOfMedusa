@@ -496,7 +496,7 @@ class RobotHandler:
             swipe_right_response = VisionResponse.make_traj(2)
             self.gotoPose(num, newPos)
             self.k_robomove(num, swipe_right_response)
-            #SEMD MESSAGE BACK THAT WE FINISHED MOVING
+
 
         if play == 5:  # twirl
             poseI = self.getAngles(num)
