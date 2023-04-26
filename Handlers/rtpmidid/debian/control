@@ -1,0 +1,29 @@
+Source: rtpmidid
+Section: unknown
+Priority: optional
+Maintainer: David Moreno <dmoreno@coralbits.com>
+Build-Depends: debhelper (>= 10), libavahi-client-dev, libfmt-dev, libasound2-dev, python3, cmake
+Standards-Version: 4.1.2
+Homepage: https://github.com/davidmoreno/rtpmidid
+
+Package: rtpmidid
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, python3
+Description: Real Time Protocol Musical Instrument Digital Interface Daemon (RTP-MIDI)
+ rtpmidid allows you to share ALSA sequencer devices on the network using RTP
+ MIDI, and import other network shared RTP MIDI devices.
+ .
+ rtpmidid is an user daemon, and when a RTP MIDI device is announced using mDNS
+ (also known as Zeroconf, Avahi, and multicast DNS) it exposes this ALSA
+ sequencer port.
+
+Package: librtpmidid0
+Section: libs
+Architecture: any
+Description: RTP MIDI library
+
+Package: librtpmidid0-dev
+Section: libdevel
+Architecture: any
+Depends: libfmt-dev, librtpmidid0
+Description: RTP MIDI library development files

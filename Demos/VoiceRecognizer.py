@@ -15,14 +15,14 @@ class VoiceDemo(IRobotDemo):
 
     def listen(self, r):
         ###### change this variable to match needed mic ######
-        # print(sr.Microphone.list_microphone_names())
+        print("list:", sr.Microphone.list_microphone_names())
         micIndex = sr.Microphone.list_microphone_names().index(self.micName)
 
         mic = sr.Microphone(micIndex) # set mic
         with mic as source:
             while self.running:
                 print("Speak a command.")
-                r.adjust_for_ambient_noise(source, duration=0.2)
+                # r.adjust_for_ambient_noise(source, duration=0.2)
                 audio = r.listen(source)
                 # text = r.recognize_google(audio)
 
@@ -51,11 +51,11 @@ class VoiceDemo(IRobotDemo):
                 text = text.lower()
 
                 print(f"Detected phrase: {text}")
-                if "hey medusa" in text:
-                    print("You have angered Medusa")
+                if "wake up" in text:
+                    print("You have woken Medusa")
                     self.robotHandler.turnOffLive()
                     self.robotHandler.scare()
-                elif "calm down" in text:
+                elif "go to sleep" in text:
                     print("Aight, Medusa is chill now")
                     self.robotHandler.turnOnLive()
                 elif "toggle lights" in text:

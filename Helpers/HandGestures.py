@@ -168,12 +168,11 @@ def detectBasic(hand_landmarks, handedness):
 
 
 def detectSideways(hand_landmarks, handedness):
-    poseCheck = hand_landmarks.landmark[5].y < hand_landmarks.landmark[9].y < hand_landmarks.landmark[13].y < \
-                hand_landmarks.landmark[17].y
-    xAxisCheck = detectNear1D(hand_landmarks.landmark[5].x, hand_landmarks.landmark[9].x, .02) and detectNear1D(
-        hand_landmarks.landmark[9].x, hand_landmarks.landmark[13].x, .02) and detectNear1D(
-        hand_landmarks.landmark[13].x, hand_landmarks.landmark[17].x, .02) and detectNear1D(
-        hand_landmarks.landmark[5].x, hand_landmarks.landmark[17].x, .02)
+    poseCheck = hand_landmarks.landmark[5].y < hand_landmarks.landmark[9].y < hand_landmarks.landmark[13].y < hand_landmarks.landmark[17].y
+    xAxisCheck = detectNear1D(hand_landmarks.landmark[5].x, hand_landmarks.landmark[9].x, .01) and detectNear1D(
+        hand_landmarks.landmark[9].x, hand_landmarks.landmark[13].x, .01) and detectNear1D(
+        hand_landmarks.landmark[13].x, hand_landmarks.landmark[17].x, .01) and detectNear1D(
+        hand_landmarks.landmark[5].x, hand_landmarks.landmark[17].x, .01)
 
     return poseCheck and xAxisCheck
 

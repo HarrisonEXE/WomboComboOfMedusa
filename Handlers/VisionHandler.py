@@ -9,6 +9,7 @@ from Helpers.DataFilters import buffered_smooth, save_vision_data
 from Handlers.DrawingHandler import DrawingHandler
 from Helpers.CvFpsCalc import CvFpsCalc
 from Helpers.HandGestures import *
+from Helpers import VisionResponse
 
 
 class VisionHandler:
@@ -38,6 +39,9 @@ class VisionHandler:
         cv.destroyAllWindows()
 
     def initialize_gesture_detection_state(self):
+        #init gesture response list
+        VisionResponse.init()
+
         # twirl variables
         self.count_twirl_left = 0
         self.curr_time_twirl_left = None
@@ -81,10 +85,6 @@ class VisionHandler:
         self.shoulder_y = []
         self.shoulder_z = []
 
-        # Queue timeout variable
-        self.last_queued = None
-
-        self.last_queued = None
 
     def detect_twirl(self, landmarks, handedness):
         if handedness == "L":
@@ -167,12 +167,11 @@ class VisionHandler:
 
                     mean_distance_right = np.mean(self.distance_right)
 
-                    if abs(np.max(self.tracker_x_right) - np.min(self.tracker_x_right)) >= 1.5 * mean_distance_right and vari_right < .002 and abs(a_right) < .15:
+                    if abs(np.max(self.tracker_x_right) - np.min(self.tracker_x_right)) >= 3 * mean_distance_right and vari_right < .002 and abs(a_right) < .20:
                         if np.sum(self.tracker_x_right[0:int(len(self.tracker_x_right) / 2)]) < np.sum(self.tracker_x_right[int(len(self.tracker_x_right) / 2):]):
                             self.curr_gesture = "swipe_left"
                         else:
                             self.curr_gesture = "swipe_right"
-                        # print("swiped")
                         self.tracker_x_right = []
                         self.tracker_y_right = []
                         self.tracker_z_right = []
@@ -260,48 +259,56 @@ class VisionHandler:
 
             self.drawingHandler.draw_styled_landmarks(image, results)
 
-            if results.right_hand_landmarks is not None:
-                landmarks = results.right_hand_landmarks
-                image_rows, image_cols, _ = image.shape
+            if not VisionResponse.is_moving:
 
-                # detect gestures
-                if (self.last_queued is None or datetime.now() > self.last_queued + timedelta(seconds = 2)):
+                if results.right_hand_landmarks is not None:
+                    landmarks = results.right_hand_landmarks
+                    image_rows, image_cols, _ = image.shape
+
+                    # detect gestures
                     self.detect_twirl(landmarks, "R")
                     self.detect_stop_go(landmarks, "R")
                     self.detect_swipe(landmarks, "R")
 
-                if self.curr_gesture is not None and self.curr_gesture != "":
-                    self.communication_queue.put(("/gesture", self.curr_gesture))
-                    self.curr_gesture = None
-                    self.last_queued = datetime.now()
+                    if self.curr_gesture is not None and self.curr_gesture != "":
+                        if not self.if_tracking:
+                            self.communication_queue.put(("/gesture", self.curr_gesture))
+                            self.curr_gesture = None
 
-                cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+                        if self.if_tracking and (self.curr_gesture == 'up' or self.curr_gesture == 'down'):
+                            self.communication_queue.put(("/gesture", self.curr_gesture))
+                            self.curr_gesture = None
 
-            if results.left_hand_landmarks is not None:
-                landmarks = results.left_hand_landmarks
-                image_rows, image_cols, _ = image.shape
+                    cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
 
-                # detect gestures
-                if not(self.vol_start) and (self.last_queued is None or datetime.now() > self.last_queued + timedelta(seconds = 2)):
-                    self.vol_origin = None
-                    self.detect_twirl(landmarks, "L")
-                    self.detect_stop_go(landmarks, "L")
-                    self.detect_swipe(landmarks, "L")
+                if results.left_hand_landmarks is not None:
+                    landmarks = results.left_hand_landmarks
+                    image_rows, image_cols, _ = image.shape
 
-                if self.vol_start:
-                    if self.vol_init is None:
-                        print("starting x-y tracking")
-                    self.vol_init = 0
-                    self.detect_xy_control(landmarks, "L")
-                    self.detect_twirl(landmarks, "L")
+                    # detect gestures
+                    if not(self.vol_start):
+                        self.vol_origin = None
+                        self.detect_twirl(landmarks, "L")
+                        self.detect_stop_go(landmarks, "L")
+                        self.detect_swipe(landmarks, "L")
 
-                if self.curr_gesture is not None and self.curr_gesture != "":
-                    self.communication_queue.put(("/gesture", self.curr_gesture))
-                    # print(self.curr_gesture)
-                    self.curr_gesture = None
-                    self.last_queued = datetime.now()
+                    if self.vol_start:
+                        if self.vol_init is None:
+                            print("starting x-y tracking")
+                        self.vol_init = 0
+                        self.detect_xy_control(landmarks, "L")
+                        self.detect_twirl(landmarks, "L")
 
-                cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+                    if self.curr_gesture is not None and self.curr_gesture != "":
+                        if not self.if_tracking:
+                            self.communication_queue.put(("/gesture", self.curr_gesture))
+                            self.curr_gesture = None
+
+                        if self.if_tracking and (self.curr_gesture == 'up' or self.curr_gesture == 'down'):
+                            self.communication_queue.put(("/gesture", self.curr_gesture))
+                            self.curr_gesture = None
+
+                    cv.putText(image, str(self.curr_gesture), (1700, 140), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
 
             if results.pose_landmarks is not None:
                 landmarks = results.pose_landmarks.landmark

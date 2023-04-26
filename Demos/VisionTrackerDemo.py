@@ -50,18 +50,18 @@ class VisionTrackerDemo(IRobotDemo):
                     self.qList[2].put([mode, 2])
                     self.qList[3].put([mode, 2])
                     self.qList[4].put([mode, 2])
-                # elif data == "swipe_left":
-                #     self.qList[0].put([mode, 3])
-                #     self.qList[1].put([mode, 3])
-                #     self.qList[2].put([mode, 3])
-                #     self.qList[3].put([mode, 3])
-                #     self.qList[4].put([mode, 3])
-                # elif data == "swipe_right":
-                #     self.qList[0].put([mode, 4])
-                #     self.qList[1].put([mode, 4])
-                #     self.qList[2].put([mode, 4])
-                #     self.qList[3].put([mode, 4])
-                #     self.qList[4].put([mode, 4])
+                elif data == "swipe_left":
+                    self.qList[0].put([mode, 3])
+                    self.qList[1].put([mode, 3])
+                    self.qList[2].put([mode, 3])
+                    self.qList[3].put([mode, 3])
+                    self.qList[4].put([mode, 3])
+                elif data == "swipe_right":
+                    self.qList[0].put([mode, 4])
+                    self.qList[1].put([mode, 4])
+                    self.qList[2].put([mode, 4])
+                    self.qList[3].put([mode, 4])
+                    self.qList[4].put([mode, 4])
                 elif data == "twirl":
                     self.qList[0].put([mode, 5])
                     self.qList[1].put([mode, 5])

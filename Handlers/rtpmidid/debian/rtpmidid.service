@@ -1,0 +1,21 @@
+[Unit]
+Description=rtpmidid
+After=network.target
+
+[Service]
+Type=simple
+# Another Type: forking
+User=rtpmidid
+Group=audio
+WorkingDirectory=/run/rtpmidid/
+ExecStart=/usr/bin/rtpmidid
+Restart=on-failure
+RuntimeDirectory=rtpmidid
+RuntimeDirectoryMode=0755
+# realtime, so more precise
+CPUSchedulingPolicy=fifo 
+# no need for max priority (20)
+CPUSchedulingPriority=10 
+
+[Install]
+WantedBy=multi-user.target

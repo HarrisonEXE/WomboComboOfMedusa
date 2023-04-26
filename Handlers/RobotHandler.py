@@ -9,9 +9,11 @@ from Helpers import positions
 from Helpers.Utils import createRandList, delay
 from Helpers.TrajectoryGeneration import fifth_poly, fifth_poly2, spline_poly
 from Helpers.DataFilters import save_joint_data, save_vision_data
+from Helpers import VisionResponse
 
 
 class RobotHandler:
+
     def __init__(self, is_lab_work=True):
         self.is_lab_work = is_lab_work
         self.lightMode = False
@@ -180,10 +182,23 @@ class RobotHandler:
     def switchLightMode(self):
         self.lightMode = not self.lightMode
 
+    def flashLights(self, robotNum):
+        self.switchLightMode()
+        # self.sendSyncVal('flash')
+        # self.sendSyncVal(str(robotNum + 1))
+        # print("LETS GOOO")
+        self.lightQ.put(robotNum)
+        # print("send flash")
+        # self.sendSyncVal('flash')
+        # self.sendSyncVal(str(2))
+        # self.switchLightMode()
+
     # ------------------------ Controllers ------------------------ #
     def lightController(self, lightQ):
+        flash_count = 0
         while True:
             if not self.lightMode:  # gradient mode
+                # print("BACK TO NORMAL")
                 self.sendSyncVal('gradient')
                 self.listSend(self.getAngles(
                     2), self.randLists[0])  # [2,3,4,5]
@@ -200,6 +215,28 @@ class RobotHandler:
                 received = lightQ.get()
                 self.sendSyncVal('flash')
                 self.sendSyncVal(str(received + 1))
+
+                flash_count += 1
+                # print("Flash count : ", flash_count)
+                # print("FLASHED")
+                # self.sendSyncVal('flash')
+
+                if flash_count == 5:
+                    flash_count = 0
+                    time.sleep(1)
+                    self.sendSyncVal('flash')
+                    self.sendSyncVal(str(1))
+                    self.sendSyncVal('flash')
+                    self.sendSyncVal(str(2))
+                    self.sendSyncVal('flash')
+                    self.sendSyncVal(str(3))
+                    self.sendSyncVal('flash')
+                    self.sendSyncVal(str(4))
+                    self.sendSyncVal('flash')
+                    self.sendSyncVal(str(5))
+                    time.sleep(1)
+                    self.switchLightMode()
+                    print("switch lights back")
 
     def strumController(self, queue, robotNum):
         i = 0
@@ -222,6 +259,7 @@ class RobotHandler:
 
             elif mode == 'pose':
                 print("Pose Command Received for Robot " + str(robotNum))
+                self.flashLights(robotNum)
                 self.posebot(robotNum, data)
 
             elif mode == 'strum':
@@ -406,13 +444,30 @@ class RobotHandler:
 
                 self.setAngles(num, p)
 
+    def preprogrambot(self, num):
+        # controls playing of hope's preprogrammed dance
+        # get gestures to play based on curr arm number
+        gestures_to_play = VisionResponse.hope_arm_gesture[num]
+        poseI = self.getAngles(num)
+        newPos = self.poseToPose(poseI, [0, 0, 0, 90, 0, 0, 0], 8)
+        hope_gestures = []
+        for i in gestures_to_play:
+            hope_gestures.append(VisionResponse.make_traj(i))
+
+        self.gotoPose(num, newPos)
+        for arm_gest in hope_gestures:
+            self.k_robomove(num, arm_gest)
+
     def posebot(self, num, play):
+
+        VisionResponse.is_moving = True
         if play == 1:  # stop
             poseI = self.getAngles(num)
             # TODO: Remove hard-coded values for robot positions
             poseF = [0, 0, 0, 90, 0, 0, 0]
             newPos = self.poseToPose(poseI, poseF, 4)
             self.gotoPose(num, newPos)
+
 
         if play == 2:  # go
             poseI = self.getAngles(num)
@@ -423,16 +478,25 @@ class RobotHandler:
         if play == 3:  # swipe_left
             poseI = self.getAngles(num)
             poseF = positions.IPc[num]
-            newPos = self.poseToPose(poseI, poseF, 4)
+            #newPos = self.poseToPose(poseI, poseF, 4)
+            newPos = self.poseToPose(poseI, [0,0,0,90,0,0,0],8)
+            swipe_left_response = VisionResponse.make_traj(3)
+            # print(len(swipe_left_response))
+            # # for item in swipe_left_response:
+            # #     print(item[0])
+            # print(swipe_left_response[0][0:20])
             self.gotoPose(num, newPos)
-            self.robomove(num, positions.circletraj[num])
+            self.k_robomove(num, swipe_left_response)
 
         if play == 4:  # swipe_left
             poseI = self.getAngles(num)
             poseF = positions.IPw[num]
-            newPos = self.poseToPose(poseI, poseF, 4)
+            #newPos = self.poseToPose(poseI, poseF, 4)
+            newPos = self.poseToPose(poseI, [0,0,0,90,0,0,0], 8)
+            swipe_right_response = VisionResponse.make_traj(2)
             self.gotoPose(num, newPos)
-            self.robomove(num, positions.wtraj[num])
+            self.k_robomove(num, swipe_right_response)
+
 
         if play == 5:  # twirl
             poseI = self.getAngles(num)
@@ -441,6 +505,7 @@ class RobotHandler:
             self.gotoPose(num, newPos)
             self.robomove(num, positions.spintraj[num])
 
+        VisionResponse.is_moving = False
     def strumbot(self, num, traj):
         pos = self.IP[num]
         j_angles = pos
@@ -455,6 +520,9 @@ class RobotHandler:
                 track_time = time.time()
                 time.sleep(0.0001)
             initial_time += 0.004
+
+    def getIsMoving(self):
+        return self.is_moving
 
     def drumbot(self, traj2, traj4, traj6, arm):
         a = time.time()
@@ -602,3 +670,16 @@ class RobotHandler:
     def switch_drum_state(self):
         self.playDrums = not self.playDrums
         self.playDrums_event.set()
+
+    def k_robomove(self, num, trajectory):
+        track_time = time.time()
+        initial_time = time.time()
+        for i in range(len(trajectory[0])):
+            angles = [trajectory[0][i], trajectory[1][i], trajectory[2][i],
+                      trajectory[3][i], trajectory[4][i], trajectory[5][i],
+                      trajectory[6][i]]
+            self.setAngles(num, angles, is_radian=False)
+            while track_time < initial_time + 0.004:
+                track_time = time.time()
+                time.sleep(0.0001)
+            initial_time += 0.004
