@@ -34,7 +34,7 @@ class RobotHandler:
         self.drumvel = 3
         self.drumtrajs = self.setDrummingTraj()
         self.playDrums = False
-        self.playDrums_event = None
+        self.playDrums_event = Event()
 
         self.lightQ = Queue()
         self.lightThread = Thread(
@@ -282,13 +282,13 @@ class RobotHandler:
         traj4_3 = spline_poly(self.IP[5][3], self.IP[7][3] - 2, self.IP[5][3], .4, .08, .13, .1, 0, .5, 0)
         traj6_3 = spline_poly(self.IP[5][5], self.IP[7][5] - 2, self.IP[5][5], .3, .08, .35, .1, 24, .5, 0)
 
-        traj2_2 = spline_poly(self.IP[5][1], self.IP[7][1] - 4, self.IP[5][1], .6, .08, 0, 0, 16, .5, 0)
-        traj4_2 = spline_poly(self.IP[5][3], self.IP[7][3] - 4, self.IP[5][3], .5, .08, .13, .1, 0, .5, 0)
-        traj6_2 = spline_poly(self.IP[5][5], self.IP[7][5] - 4, self.IP[5][5], .4, .08, .35, .1, 16, .5, 0)
+        traj2_2 = spline_poly(self.IP[5][1], self.IP[7][1] - 4, self.IP[5][1], .6, .08, 0, 0, 16, .35, 0)
+        traj4_2 = spline_poly(self.IP[5][3], self.IP[7][3] - 4, self.IP[5][3], .5, .08, .13, .1, 0, .35, 0)
+        traj6_2 = spline_poly(self.IP[5][5], self.IP[7][5] - 4, self.IP[5][5], .4, .08, .35, .1, 16, .35, 0)
 
-        traj2_1 = spline_poly(self.IP[5][1], self.IP[7][1] - 6, self.IP[5][1], .7, .08, 0, 0, 8, .5, 0)
-        traj4_1 = spline_poly(self.IP[5][3], self.IP[7][3] - 6, self.IP[5][3], .6, .08, .13, .1, 0, .5, 0)
-        traj6_1 = spline_poly(self.IP[5][5], self.IP[7][5] - 6, self.IP[5][5], .5, .08, .35, .1, 8, .5, 0)
+        traj2_1 = spline_poly(self.IP[5][1], self.IP[7][1] - 6, self.IP[5][1], .7, .08, 0, 0, 8, .25, 0)
+        traj4_1 = spline_poly(self.IP[5][3], self.IP[7][3] - 6, self.IP[5][3], .6, .08, .13, .06, 0, .25, 0)
+        traj6_1 = spline_poly(self.IP[5][5], self.IP[7][5] - 6, self.IP[5][5], .5, .08, .35, .1, 8, .25, 0)
 
         traj2_14 = spline_poly(self.IP[5][1], self.IP[7][1] + 6, self.IP[5][1], .4, .08, 0, 0, 32, .5, 0)
         traj4_14 = spline_poly(self.IP[5][3], self.IP[7][3] + 6, self.IP[5][3], .3, .08, .13, .1, 0, .5, 0)
@@ -298,13 +298,13 @@ class RobotHandler:
         traj4_13 = spline_poly(self.IP[5][3], self.IP[7][3] - 2, self.IP[5][3], .4, .08, .13, .1, 0, .5, 0)
         traj6_13 = spline_poly(self.IP[5][5], self.IP[7][5] - 2, self.IP[5][5], .3, .08, .35, .1, 24, .5, 0)
 
-        traj2_12 = spline_poly(self.IP[5][1], self.IP[7][1] - 4, self.IP[5][1], .6, .08, 0, 0, 16, .5, 0)
-        traj4_12 = spline_poly(self.IP[5][3], self.IP[7][3] - 4, self.IP[5][3], .5, .08, .13, .1, 0, .5, 0)
-        traj6_12 = spline_poly(self.IP[5][5], self.IP[7][5] - 4, self.IP[5][5], .4, .08, .35, .1, 16, .5, 0)
+        traj2_12 = spline_poly(self.IP[5][1], self.IP[7][1] - 4, self.IP[5][1], .6, .08, 0, 0, 16, .35, 0)
+        traj4_12 = spline_poly(self.IP[5][3], self.IP[7][3] - 4, self.IP[5][3], .5, .08, .13, .1, 0, .35, 0)
+        traj6_12 = spline_poly(self.IP[5][5], self.IP[7][5] - 4, self.IP[5][5], .4, .08, .35, .1, 16, .35, 0)
 
-        traj2_11 = spline_poly(self.IP[5][1], self.IP[7][1] - 6, self.IP[5][1], .7, .08, 0, 0, 8, .5, 0)
-        traj4_11 = spline_poly(self.IP[5][3], self.IP[7][3] - 6, self.IP[5][3], .6, .08, .13, .1, 0, .5, 0)
-        traj6_11 = spline_poly(self.IP[5][5], self.IP[7][5] - 6, self.IP[5][5], .5, .08, .35, .1, 8, .5, 0)
+        traj2_11 = spline_poly(self.IP[5][1], self.IP[7][1] - 6, self.IP[5][1], .7, .08, 0, 0, 8, .25, 0)
+        traj4_11 = spline_poly(self.IP[5][3], self.IP[7][3] - 6, self.IP[5][3], .6, .08, .13, .06, 0, .25, 0)
+        traj6_11 = spline_poly(self.IP[5][5], self.IP[7][5] - 6, self.IP[5][5], .5, .08, .35, .1, 8, .25, 0)
 
         return {
             '1': [traj2_1, traj4_1, traj6_1],
@@ -336,30 +336,40 @@ class RobotHandler:
     #             t = time.time()
 
     def drummer2(self, arms):
+
+        t_init = time.time()
+        print("initial time set")
+
         t1 = time.time()
         t2 = time.time()
+
+        #these are the delays for different hit velocities
+        delayarray = [0, .042, .076, .195]
 
         # Create an Event object
         self.playDrums_event = Event()
 
         while True:
-            if self.playDrums:
 
+            if self.playDrums:
+                t1 = time.time()
                 if arms[0] == 5:
                     traj2 = self.drumtrajs[str(self.drumvel)][0]
                     traj4 = self.drumtrajs[str(self.drumvel)][1]
                     traj6 = self.drumtrajs[str(self.drumvel)][2]
-                    if time.time() - t1 >= 2:
-                        self.drumbot(traj2, traj4, traj6, arms[0])
-                        t1 = time.time()
 
-                if arms[1] == 6:
-                    traj2 = self.drumtrajs[str(self.drumvel + 10)][0]
-                    traj4 = self.drumtrajs[str(self.drumvel + 10)][1]
-                    traj6 = self.drumtrajs[str(self.drumvel + 10)][2]
-                    if time.time() - t2 >= 2:
-                        self.drumbot(traj2, traj4, traj6, arms[1])
-                        t2 = time.time()
+                    if (t1 - t_init)%2.353 > delayarray[self.drumvel-1] and (t1 - t_init)%2.353 < (delayarray[self.drumvel-1] + 0.01):
+                        #wait for any extra time, so slow hits hit at the same time as hard
+                        self.drumbot(traj2, traj4, traj6, arms[0])
+
+
+                # if arms[1] == 6:
+                #     traj2 = self.drumtrajs[str(self.drumvel + 10)][0]
+                #     traj4 = self.drumtrajs[str(self.drumvel + 10)][1]
+                #     traj6 = self.drumtrajs[str(self.drumvel + 10)][2]
+                #     if time.time() - t2 >= 2:
+                #         #self.drumbot(traj2, traj4, traj6, arms[1])
+                #         t2 = time.time()
 
             else:
                 self.playDrums_event.clear()
@@ -548,7 +558,8 @@ class RobotHandler:
                 time.sleep(0.0001)
             initial_time += 0.004
 
-        print("arm: ", arm, "traj time: ", time.time() - a)
+        #Used to track how long a drum strike takes
+        #print("arm: ", arm, "traj time: ", time.time() - a)
 
     # Picks and sends indexes, defined by anglesToSend, of a 6 item list, defined by listToSend
     def listSend(self, listToSend, anglesToSend):
