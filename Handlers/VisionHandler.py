@@ -10,7 +10,6 @@ from Handlers.DrawingHandler import DrawingHandler
 from Helpers.CvFpsCalc import CvFpsCalc
 from Helpers.HandGestures import *
 from Helpers import VisionResponse
-from Handlers import RobotHandler
 
 
 class VisionHandler:
