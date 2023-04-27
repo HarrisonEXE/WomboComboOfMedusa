@@ -22,63 +22,39 @@ class VisionTrackerDemo(IRobotDemo):
 
     def start(self):
         self.announceStart()
+        self.running = True
         self.readyRobots()
         self.listener_thread.start()
         self.vision_thread.start()
 
-    # TODO: Add a method to stop the server.
-    # TODO: Add different poses/tracking for different arms.
+    def kill(self):
+        super().kill()
+        self.vision.kill()
+        self.listener_thread.join()
+        self.vision_thread.join()
 
     def _listener(self):
         print("Listening queue started")
-        while True:
-            # print(self.communication_queue)
+
+        gesture_mapping = {"stop": 1, "go": 2, "swipe_left": 3, "swipe_right": 4, "twirl": 5}
+        while self.running:
             address, data = self.communication_queue.get()
 
             if address == "/gesture":
                 mode = "pose"
-                print(data)
-                if data == "stop":
-                    self.qList[0].put([mode, 1])
-                    self.qList[1].put([mode, 1])
-                    self.qList[2].put([mode, 1])
-                    self.qList[3].put([mode, 1])
-                    self.qList[4].put([mode, 1])
-                elif data == "go":
-                    self.qList[0].put([mode, 2])
-                    self.qList[1].put([mode, 2])
-                    self.qList[2].put([mode, 2])
-                    self.qList[3].put([mode, 2])
-                    self.qList[4].put([mode, 2])
-                elif data == "swipe_left":
-                    self.qList[0].put([mode, 3])
-                    self.qList[1].put([mode, 3])
-                    self.qList[2].put([mode, 3])
-                    self.qList[3].put([mode, 3])
-                    self.qList[4].put([mode, 3])
-                elif data == "swipe_right":
-                    self.qList[0].put([mode, 4])
-                    self.qList[1].put([mode, 4])
-                    self.qList[2].put([mode, 4])
-                    self.qList[3].put([mode, 4])
-                    self.qList[4].put([mode, 4])
-                elif data == "twirl":
-                    self.qList[0].put([mode, 5])
-                    self.qList[1].put([mode, 5])
-                    self.qList[2].put([mode, 5])
-                    self.qList[3].put([mode, 5])
-                    self.qList[4].put([mode, 5])
-                elif data == "up":
-                    self.qList[5].put([mode, "up"])
-                elif data == "down":
-                    self.qList[5].put([mode, "down"])
+                if data in gesture_mapping:
+                    gesture_value = gesture_mapping[data]
+                    for q in self.qList[:5]:
+                        q.put([mode, gesture_value])
+                elif data == "up" or data == "down":
+                    self.qList[5].put([mode, data])
             elif address == "/live":
                 mode = "live"
-                self.qList[0].put([mode, data])
-                self.qList[1].put([mode, data])
-                self.qList[2].put([mode, data])
-                self.qList[3].put([mode, data])
-                self.qList[4].put([mode, data])
+                for q in self.qList[:5]:
+                    q.put([mode, data])
             elif address == "/updateState":
                 if data == "drums":
                     self.robotHandler.switch_drum_state()
+
+        print("Listening queue closed")
+        return
