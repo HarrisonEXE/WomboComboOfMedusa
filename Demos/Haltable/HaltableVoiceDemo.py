@@ -13,7 +13,7 @@ class HaltableVoiceDemo(IRobotDemo):
     def start(self):
         self.announceStart()
         self.running = True
-        self.readyRobots()
+        self.readyRobotsWithoutLive()
         r = sr.Recognizer()
         return self.listen(r)
 
@@ -25,7 +25,10 @@ class HaltableVoiceDemo(IRobotDemo):
         with mic as source:
             while self.running:
                 print("Speak a command.")
-                #r.adjust_for_ambient_noise(source, duration=0.2)
+                # self.robotHandler.turnOnLive()
+                # return True
+                r.adjust_for_ambient_noise(source, duration=1)
+                ####################################### IGNORING THIS #################
                 audio = r.listen(source)
 
                 response = {
@@ -48,12 +51,12 @@ class HaltableVoiceDemo(IRobotDemo):
                 text = text.lower()
 
                 print(f"Detected phrase: {text}")
-                if "wake up" or "up" in text:
+                if "hey" in text:
                     print("You have angered Medusa")
                     self.robotHandler.turnOnLive()
                     return True
 
-                elif "goodbye medusa" in text:
+                elif "goodbye" in text:
                     print("Medusa is going to sleep")
                     self.robotHandler.turnOnLive()
                     return True

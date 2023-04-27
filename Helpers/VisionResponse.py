@@ -7,9 +7,11 @@ import numpy as np
 import csv
 from Helpers.TrajectoryGeneration import fifth_poly
 
-# from pythonosc import udp_client
-# from pythonosc import dispatcher
-# from pythonosc import osc_server
+from pythonosc import udp_client
+from pythonosc import dispatcher
+from pythonosc import osc_server
+
+import atexit
 
 home = [0, 0, 0, 90, 0, 0, 0]
 time_to_home = 8
@@ -26,6 +28,34 @@ hope_4 = [18, 19, 20, 21]
 hope_0 = [22]
 hope_1 = [23]
 hope_arm_gesture = [hope_0, hope_1, hope_2, hope_3, hope_4]
+
+global thread_swipe_counter
+swipe_gesture_order = [2,3,4,24,25,26]
+global curr_gesture
+global rtp_dispatcher
+
+def choose_swipe_gesture():
+    global curr_gesture
+    global thread_swipe_counter
+    if thread_swipe_counter == 0:
+        curr_gesture = swipe_gesture_order[random.randint(0,5)]
+    thread_swipe_counter += 1
+    if thread_swipe_counter == 5:
+        thread_swipe_counter = 0
+    return curr_gesture
+
+def server():
+    UDP_IP = '192.168.2.3'
+    UDP_PORT = 5138
+
+    my_dispatcher = dispatcher.Dispatcher()
+    server = osc_server.ThreadingOSCUDPServer((UDP_IP, UDP_PORT), my_dispatcher)
+    print("Serving on{}".format(server.server_address))
+    server.serve_forever()
+    atexit.register(server.server_close())
+
+    return my_dispatcher
+
 def get_gesture_info():
     with open('/home/codmusic/Downloads/MedusaAV/WomboComboOfMedusa/Helpers/vision_response.csv') as csv_db:
         csv_reader = csv.DictReader(csv_db, delimiter=',')
@@ -152,18 +182,10 @@ def make_traj(gesture_num):
 def init():
     # get the gesture info
     get_gesture_info()
+    global thread_swipe_counter
+    thread_swipe_counter = 0
+    global curr_gesture
+    curr_gesture = 0
+    # global rtp_dispatcher
+    # rtp_dispatcher = server()
 
-    # WAVE0 = [-0.25, 35.5, -2, 126.5, 101, 80.9, -45]
-    # WAVE1 = [2.62, 33.5, 0, 127.1, 237.6, 72.6, -57.3]
-    # WAVE2 = [-1.4, 29.4, 0, 120, -15, 23.1, -45]
-    # WAVE3 = [-1.4, 30.9, 0, 120, 48.9, 44.6, -45]
-    # WAVE4 = [-1.8, 30.9, 0, 120, -78.6, 44.6, -45]
-    # wave_ip = [WAVE0, WAVE1, WAVE2, WAVE3, WAVE4]
-
-    # strumD = 30
-    # SIP0 = [-0.25, 87.38, -2, 126.5, -strumD / 2, 51.73, -45]
-    # SIP1 = [2.62, 86.2, 0, 127.1, -strumD / 2, 50.13, -45]
-    # SIP2 = [1.3, 81.68, 0.0, 120, -strumD / 2, 54.2, -45]
-    # SIP3 = [-1.4, 83.8, 0, 120, -strumD / 2, 50.75, -45]
-    # SIP4 = [-1.8, 81.8, 0, 120, -strumD / 2, 50.65, -45]
-    # sip = [SIP0, SIP1, SIP2, SIP3, SIP4]

@@ -39,13 +39,16 @@ class VisionTrackerDemo(IRobotDemo):
 
     def _listener(self):
         print("Listening queue started")
+        address = ' '
+        data = ' '
         while self.running:
-            if self.communication_queue.empty() == False:
-                address, data = self.communication_queue.get()
-
+            # if self.communication_queue.empty() == False:
+            address, data = self.communication_queue.get()
+            print(self.communication_queue.qsize())
             if address == "/gesture":
                 mode = "pose"
-                print(data)
+                print("hi" + str(data))
+
                 if data == "stop":
                     self.qList[0].put([mode, 1])
                     self.qList[1].put([mode, 1])
@@ -90,6 +93,7 @@ class VisionTrackerDemo(IRobotDemo):
             elif address == "/updateState":
                 if data == "drums":
                     self.robotHandler.switch_drum_state()
+            time.sleep(0.1)
 
         print("Listening queue closed")
         return

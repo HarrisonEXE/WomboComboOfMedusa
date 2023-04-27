@@ -280,6 +280,8 @@ class VisionHandler:
                         if not self.if_tracking:
                             self.communication_queue.put(("/gesture", self.curr_gesture))
                             self.curr_gesture = None
+                            print("hfewfew")
+                            print(self.curr_gesture)
 
                         if self.if_tracking and (self.curr_gesture == 'up' or self.curr_gesture == 'down'):
                             self.communication_queue.put(("/gesture", self.curr_gesture))

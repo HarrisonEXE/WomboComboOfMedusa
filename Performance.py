@@ -31,9 +31,9 @@ class Performance:
         # 0:00 ------------------- 1 -
         # Voice Command (Audio)
         # ----------------------------
-        # mainThread = Thread(target=self.voiceDemo.start)
-        # mainThread.start()
-        # mainThread.join()
+        mainThread = Thread(target=self.voiceDemo.start)
+        mainThread.start()
+        mainThread.join()
 
         # 0:01 - 0:30 ------------ 2 -
         # Xylophone Mimicking (Audio)
@@ -49,7 +49,7 @@ class Performance:
         # TODO: Audio blends into presequence
 
         # 0:31 - 3:30 ------------ 2 -
-        # Xylophone Mimicking (Audio)
+        # Xylophone Mimicking (Aud io)
         # ----------------------------
         mainThread = Thread(target=self.visionTrackerDemo.start)
         mainThread.start()

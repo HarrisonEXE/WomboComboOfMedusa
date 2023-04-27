@@ -2,6 +2,7 @@ import math
 import time
 import numpy as np
 import serial
+import csv
 from xarm import XArmAPI
 from queue import Queue
 from threading import Thread, Event
@@ -122,8 +123,12 @@ class RobotHandler:
             self.arms[i].clean_error()
             self.arms[i].set_mode(0)
             self.arms[i].set_state(0)
-            self.arms[i].set_servo_angle(angle=self.IP[i], wait=False, speed=20, acceleration=0.25,
+            if i < 5:
+                self.arms[i].set_servo_angle(angle=self.IPts[i], wait=False, speed=20, acceleration=0.25,
                                          is_radian=False)
+            else:
+                self.arms[i].set_servo_angle(angle=self.IP[i], wait=False, speed=20, acceleration=0.25,
+                                             is_radian=False)
         print(f"{len(self.arms)} arms connected.")
 
     def startThreads(self):
@@ -135,6 +140,21 @@ class RobotHandler:
         # self.xArmDrumThread1.start()
         # self.xArmDrumThread2.start()
 
+    def readFile(self, csvFile, robnum):
+        flower = []
+        with open(csvFile, newline='') as csvfile:
+            paths_reader_j = csv.reader(csvfile, delimiter=',', quotechar='|')
+            for path in paths_reader_j:
+                flower.append(self.cvt(path,robnum))
+        return flower
+
+
+    def cvt(self, path, robnum):
+        return_vector = []
+        for i in range(7):
+            positiontoread = i + robnum*7
+            return_vector.append(float(path[positiontoread]))
+        return return_vector
     def moveToStart(self, index):
         self.arms[index].set_servo_angle(angle=[0.0, 0.0, 0.0, 1.57, 0.0, 0, 0.0], wait=False, speed=0.4,
                                          acceleration=0.25,
@@ -152,6 +172,7 @@ class RobotHandler:
         self.waitForRobots()
 
     def turnOnLive(self):
+        print("called")
         for i in range(len(self.arms)):
             self.moveToStrumPos(i)
 
@@ -239,6 +260,7 @@ class RobotHandler:
                     print("switch lights back")
 
     def strumController(self, queue, robotNum):
+        print("starting controller")
         i = 0
 
         # TODO: Move to seperate method
@@ -246,6 +268,10 @@ class RobotHandler:
         downStrumTraj = fifth_poly(
             self.strumD / 2, -self.strumD / 2, self.speed)
         strumTrajectories = [upStrumTraj, downStrumTraj]
+
+        directory = '/home/codmusic/Downloads/MedusaAV/WomboComboOfMedusa/Helpers/00001BarCombo.csv'
+        programmedDance = (self.readFile(directory, robotNum))
+
 
         while True:
             # TODO: Add "mode" parameter to all queue items across the board
@@ -274,6 +300,10 @@ class RobotHandler:
 
             elif mode == 'dance':
                 print("Playing dance for arm", robotNum)
+                self.preprogrambot(programmedDance,robotNum)
+
+            # elif mode == 'Dance':
+
                 # self.preprogrambot(robotNum)
 
     def setDrummingTraj(self):
@@ -448,24 +478,26 @@ class RobotHandler:
 
                 self.setAngles(num, p)
 
-    def preprogrambot(self, num):
+    def preprogrambot(self, programmedDance, num):
+        print("playing this sheeeyt")
         # controls playing of hope's preprogrammed dance
         # get gestures to play based on curr arm number
         gestures_to_play = VisionResponse.hope_arm_gesture[num]
         poseI = self.getAngles(num)
         newPos = self.poseToPose(poseI, [0, 0, 0, 90, 0, 0, 0], 8)
         hope_gestures = []
-        for i in gestures_to_play:
-            hope_gestures.append(VisionResponse.make_traj(i))
+        # for i in gestures_to_play:
+        #     hope_gestures.append(VisionResponse.make_traj(i))
 
         self.gotoPose(num, newPos)
-        for arm_gest in hope_gestures:
-            self.k_robomove(num, arm_gest)
+        # for arm_gest in hope_gestures:
+        self.H_robomove(num, programmedDance)
 
     def posebot(self, num, play):
 
         VisionResponse.is_moving = True
         if play == 1:  # stop
+            # VisionResponse.rtp_dispatcher.map("anything", 1)
             poseI = self.getAngles(num)
             # TODO: Remove hard-coded values for robot positions
             poseF = [0, 0, 0, 90, 0, 0, 0]
@@ -474,17 +506,22 @@ class RobotHandler:
 
 
         if play == 2:  # go
+            # VisionResponse.rtp_dispatcher.map("anything", 1)
             poseI = self.getAngles(num)
             poseF = self.IP[num]
             newPos = self.poseToPose(poseI, poseF, 4)
             self.gotoPose(num, newPos)
 
         if play == 3:  # swipe_left
+            # VisionResponse.rtp_dispatcher.map("anything", 1)
             poseI = self.getAngles(num)
             poseF = positions.IPc[num]
             #newPos = self.poseToPose(poseI, poseF, 4)
             newPos = self.poseToPose(poseI, [0,0,0,90,0,0,0],8)
-            swipe_left_response = VisionResponse.make_traj(3)
+            curr_gest = VisionResponse.choose_swipe_gesture()
+            swipe_left_response = VisionResponse.make_traj(curr_gest)
+            print("CURR GEST IS")
+            print(curr_gest)
             # print(len(swipe_left_response))
             # # for item in swipe_left_response:
             # #     print(item[0])
@@ -493,16 +530,21 @@ class RobotHandler:
             self.k_robomove(num, swipe_left_response)
 
         if play == 4:  # swipe_left
+            # VisionResponse.rtp_dispatcher.map("anything", 1)
             poseI = self.getAngles(num)
             poseF = positions.IPw[num]
             #newPos = self.poseToPose(poseI, poseF, 4)
             newPos = self.poseToPose(poseI, [0,0,0,90,0,0,0], 8)
-            swipe_right_response = VisionResponse.make_traj(2)
+            curr_gest = VisionResponse.choose_swipe_gesture()
+            swipe_right_response = VisionResponse.make_traj(curr_gest)
+            print("CURR GEST IS")
+            print(curr_gest)
             self.gotoPose(num, newPos)
             self.k_robomove(num, swipe_right_response)
 
 
         if play == 5:  # twirl
+            # VisionResponse.rtp_dispatcher.map("anything", 1)
             poseI = self.getAngles(num)
             poseF = positions.IPus[num]
             newPos = self.poseToPose(poseI, poseF, 4)
@@ -682,8 +724,26 @@ class RobotHandler:
             angles = [trajectory[0][i], trajectory[1][i], trajectory[2][i],
                       trajectory[3][i], trajectory[4][i], trajectory[5][i],
                       trajectory[6][i]]
+            # if num == 3:
+                # print(angles)
             self.setAngles(num, angles, is_radian=False)
             while track_time < initial_time + 0.004:
                 track_time = time.time()
                 time.sleep(0.0001)
             initial_time += 0.004
+
+    def H_robomove(self, num, trajectory):
+        track_time = time.time()
+        initial_time = time.time()
+        for angles in trajectory:
+        # for i in range(len(trajectory[0])):
+        #     angles = [trajectory[0][i], trajectory[1][i], trajectory[2][i],
+        #               trajectory[3][i], trajectory[4][i], trajectory[5][i],
+        #               trajectory[6][i]]
+            if num == 3:
+                print(angles)
+            self.setAngles(num, angles, is_radian=False)
+            while track_time < initial_time + 0.006:
+                track_time = time.time()
+                time.sleep(0.0001)
+            initial_time += 0.006
