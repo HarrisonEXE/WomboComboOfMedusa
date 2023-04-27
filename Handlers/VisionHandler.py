@@ -34,9 +34,13 @@ class VisionHandler:
         self.communication_queue = communication_queue
 
     def start(self):
-        self.run()
-        self.cap.release()
-        cv.destroyAllWindows()
+            self.running = True
+            self.run()
+            self.cap.release()
+            cv.destroyAllWindows()
+
+    def kill(self):
+        self.running = False
 
     def initialize_gesture_detection_state(self):
         #init gesture response list
@@ -238,10 +242,10 @@ class VisionHandler:
     def run(self):
         self.initialize_gesture_detection_state()
 
-        while True:
+        while self.running:
             key_pressed = cv.waitKey(10) & 0xFF
             if key_pressed == 27:
-                break
+                self.running = False
             elif key_pressed == ord('d'):
                 self.vol_start = not self.vol_start
                 print("key pressed - tracking drums", self.vol_start)

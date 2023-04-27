@@ -10,6 +10,7 @@ from Handlers.RTPMidiHandler import RtpMidi
 
 midiQueue = Queue()
 
+
 class Performance:
     def __init__(self, robotHandler, is_lab_work=True):
         self.robotHandler = robotHandler
@@ -58,6 +59,12 @@ class Performance:
         mainThread = Thread(target=self.voiceDemo.start)
         mainThread.start()
         mainThread.join()
+
+    def stopSequence(self):
+        self.voiceDemo.kill()
+        self.micDemo.kill()
+        self.visionTrackerDemo.kill()
+        self.mainThread.join()
 
 
 class MyHandler(server.Handler):

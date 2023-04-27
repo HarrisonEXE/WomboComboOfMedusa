@@ -22,17 +22,20 @@ class VisionTrackerDemo(IRobotDemo):
 
     def start(self):
         self.announceStart()
+        self.running = True
         self.readyRobots()
         self.listener_thread.start()
         self.vision_thread.start()
 
-    # TODO: Add a method to stop the server.
-    # TODO: Add different poses/tracking for different arms.
+    def kill(self):
+        super().kill()
+        self.vision.kill()
+        self.listener_thread.join()
+        self.vision_thread.join()
 
     def _listener(self):
         print("Listening queue started")
-        while True:
-            # print(self.communication_queue)
+        while self.running:
             address, data = self.communication_queue.get()
 
             if address == "/gesture":
@@ -82,3 +85,7 @@ class VisionTrackerDemo(IRobotDemo):
             elif address == "/updateState":
                 if data == "drums":
                     self.robotHandler.switch_drum_state()
+
+            self.communication_queue.task_done()
+        print("Listening queue closed")
+        return

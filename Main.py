@@ -29,13 +29,19 @@ class MedusaDemo:
 def run_demo():
     robotHandler = RobotHandler()
     demo = MedusaDemo(robotHandler)
-    demo.run()
+    try:
+        demo.run()
+    except KeyboardInterrupt:
+        demo.current_demo.kill()
 
 
 def run_performance():
     robotHandler = RobotHandler(is_lab_work=True)
     performance = Performance(robotHandler, is_lab_work=True)
-    performance.runSequence()
+    try:
+        performance.runSequence()
+    except KeyboardInterrupt:
+        performance.stopSequence()
 
 
 if __name__ == '__main__':
@@ -46,7 +52,13 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if args.mode == "demo":
-        run_demo()
-    elif args.mode == "performance":
-        run_performance()
+    try:
+        if args.mode == "demo":
+            run_demo()
+        elif args.mode == "performance":
+            run_performance()
+    except KeyboardInterrupt:
+        print("Keyboard interrupt detected. Killing program...")
+    finally:
+        print("Exiting...")
+        exit(0)
