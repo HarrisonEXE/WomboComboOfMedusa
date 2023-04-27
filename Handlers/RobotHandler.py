@@ -462,6 +462,7 @@ class RobotHandler:
 
         VisionResponse.is_moving = True
         if play == 1:  # stop
+            VisionResponse.rtp_dispatcher.map("anything", 1)
             poseI = self.getAngles(num)
             # TODO: Remove hard-coded values for robot positions
             poseF = [0, 0, 0, 90, 0, 0, 0]
@@ -470,17 +471,22 @@ class RobotHandler:
 
 
         if play == 2:  # go
+            VisionResponse.rtp_dispatcher.map("anything", 1)
             poseI = self.getAngles(num)
             poseF = self.IP[num]
             newPos = self.poseToPose(poseI, poseF, 4)
             self.gotoPose(num, newPos)
 
         if play == 3:  # swipe_left
+            # TODO: SEND TO UDP FOR POSE DETECTION SOUND
+            #VisionResponse.dispatcher.map("/anything", 1)
+            VisionResponse.rtp_dispatcher.map("anything", 1)
             poseI = self.getAngles(num)
             poseF = positions.IPc[num]
             #newPos = self.poseToPose(poseI, poseF, 4)
             newPos = self.poseToPose(poseI, [0,0,0,90,0,0,0],8)
-            swipe_left_response = VisionResponse.make_traj(3)
+            curr_gesture = VisionResponse.choose_swipe_gesture()
+            swipe_left_response = VisionResponse.make_traj(curr_gesture)
             # print(len(swipe_left_response))
             # # for item in swipe_left_response:
             # #     print(item[0])
@@ -489,16 +495,19 @@ class RobotHandler:
             self.k_robomove(num, swipe_left_response)
 
         if play == 4:  # swipe_left
+            VisionResponse.rtp_dispatcher.map("anything", 1)
             poseI = self.getAngles(num)
             poseF = positions.IPw[num]
             #newPos = self.poseToPose(poseI, poseF, 4)
             newPos = self.poseToPose(poseI, [0,0,0,90,0,0,0], 8)
-            swipe_right_response = VisionResponse.make_traj(2)
+            curr_gesture = VisionResponse.choose_swipe_gesture()
+            swipe_right_response = VisionResponse.make_traj(curr_gesture)
             self.gotoPose(num, newPos)
             self.k_robomove(num, swipe_right_response)
             #SEMD MESSAGE BACK THAT WE FINISHED MOVING
 
         if play == 5:  # twirl
+            VisionResponse.rtp_dispatcher.map("anything", 1)
             poseI = self.getAngles(num)
             poseF = positions.IPus[num]
             newPos = self.poseToPose(poseI, poseF, 4)
