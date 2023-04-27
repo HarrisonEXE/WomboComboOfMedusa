@@ -29,14 +29,19 @@ class VisionTrackerDemo(IRobotDemo):
 
     def kill(self):
         super().kill()
-        self.vision.kill()
+        self.running = False
         self.listener_thread.join()
+        print("killed listener thread")
+        self.vision.kill()
         self.vision_thread.join()
+        print("killed vision thread")
+
 
     def _listener(self):
         print("Listening queue started")
         while self.running:
-            address, data = self.communication_queue.get()
+            if self.communication_queue.empty() == False:
+                address, data = self.communication_queue.get()
 
             if address == "/gesture":
                 mode = "pose"
@@ -86,6 +91,5 @@ class VisionTrackerDemo(IRobotDemo):
                 if data == "drums":
                     self.robotHandler.switch_drum_state()
 
-            self.communication_queue.task_done()
         print("Listening queue closed")
         return

@@ -6,6 +6,7 @@ from Demos.MicDemo import MicDemo
 from Demos.RandomizedMicDemo import RandomizedMicDemo
 from Demos.VoiceRecognizer import VoiceDemo
 from Demos.VisionTrackerDemo import VisionTrackerDemo
+from Demos.RecordedDanceDemo import RecordedDanceDemo
 from Handlers.RobotHandler import RobotHandler
 from Performance import Performance
 
@@ -19,8 +20,9 @@ class MedusaDemo:
         self.randomized_mic_demo = RandomizedMicDemo(robotHandler)
         self.voice_demo = VoiceDemo(robotHandler)
         self.vision_tracker_demo = VisionTrackerDemo(robotHandler)
+        self.recorded_dance_demo = RecordedDanceDemo(robotHandler)
 
-        self.current_demo = self.vision_tracker_demo
+        self.current_demo = self.recorded_dance_demo
 
     def run(self):
         self.current_demo.start()
@@ -59,6 +61,6 @@ if __name__ == '__main__':
             run_performance()
     except KeyboardInterrupt:
         print("Keyboard interrupt detected. Killing program...")
-    finally:
-        print("Exiting...")
-        exit(0)
+    # finally:
+    #     print("Exiting...")
+    #     exit(0)

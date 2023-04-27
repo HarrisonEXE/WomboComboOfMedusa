@@ -4,6 +4,7 @@ import time
 from Demos.Haltable.HaltableMicDemo import HaltableMicDemo
 from Demos.Haltable.HaltableVoiceDemo import HaltableVoiceDemo
 from Demos.VisionTrackerDemo import VisionTrackerDemo
+from Demos.RecordedDanceDemo import RecordedDanceDemo
 from pymidi import server
 
 from Handlers.RTPMidiHandler import RtpMidi
@@ -18,6 +19,7 @@ class Performance:
         self.voiceDemo = HaltableVoiceDemo(robotHandler, is_lab_work)
         self.micDemo = HaltableMicDemo(robotHandler, is_lab_work, robots_already_awake=True)
         self.visionTrackerDemo = VisionTrackerDemo(robotHandler, is_lab_work, robots_already_awake=True)
+        self.recodedDanceDemo = RecordedDanceDemo(robotHandler, is_lab_work, robots_already_awake=True)
 
         self.mainThread = Thread()
         self.rtp_midi = RtpMidi("xArms", MyHandler(), 5004)
@@ -29,9 +31,9 @@ class Performance:
         # 0:00 ------------------- 1 -
         # Voice Command (Audio)
         # ----------------------------
-        mainThread = Thread(target=self.voiceDemo.start)
-        mainThread.start()
-        mainThread.join()
+        # mainThread = Thread(target=self.voiceDemo.start)
+        # mainThread.start()
+        # mainThread.join()
 
         # 0:01 - 0:30 ------------ 2 -
         # Xylophone Mimicking (Audio)
@@ -51,7 +53,17 @@ class Performance:
         # ----------------------------
         mainThread = Thread(target=self.visionTrackerDemo.start)
         mainThread.start()
-        # TODO: Figure out transition to end
+        midiQueue.get()
+        self.visionTrackerDemo.kill()
+        mainThread.join()
+        print("Killed vision, starting recorded dance")
+
+        mainThread = Thread(target=self.recodedDanceDemo.start)
+        mainThread.start()
+        midiQueue.get()
+        print("killin recorded dance thread")
+        self.recodedDanceDemo.kill()
+        mainThread.join()
 
         # END--------------------- 2 -
         # Xylophone Mimicking (Audio)
@@ -64,6 +76,7 @@ class Performance:
         self.voiceDemo.kill()
         self.micDemo.kill()
         self.visionTrackerDemo.kill()
+        self.recodedDanceDemo.kill()
         self.mainThread.join()
 
 

@@ -272,6 +272,10 @@ class RobotHandler:
 
                 i += 1
 
+            elif mode == 'dance':
+                print("Playing dance for arm", robotNum)
+                # self.preprogrambot(robotNum)
+
     def setDrummingTraj(self):
 
         traj2_4 = spline_poly(self.IP[5][1], self.IP[7][1] + 1, self.IP[5][1], .4, .08, 0, 0, 32, .5, 0)

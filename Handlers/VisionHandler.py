@@ -36,11 +36,13 @@ class VisionHandler:
     def start(self):
             self.running = True
             self.run()
-            self.cap.release()
-            cv.destroyAllWindows()
 
     def kill(self):
         self.running = False
+        self.cap.release()
+        cv.destroyAllWindows()
+        print("Killed opencv")
+        return
 
     def initialize_gesture_detection_state(self):
         #init gesture response list
