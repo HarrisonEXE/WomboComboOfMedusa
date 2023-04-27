@@ -522,7 +522,7 @@ class RobotHandler:
             poseF = positions.IPus[num]
             newPos = self.poseToPose(poseI, poseF, 4)
             self.gotoPose(num, newPos)
-            self.robomove(num, positions.spintraj[num])
+            self.robomove(num, positions.circletraj[num])
 
         VisionResponse.is_moving = False
     def strumbot(self, num, traj):
